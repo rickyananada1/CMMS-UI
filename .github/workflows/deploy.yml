@@ -3,8 +3,6 @@ name: Deploy to VPS
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   deploy:
@@ -19,14 +17,24 @@ jobs:
         node-version: '18.x'
     
     - name: Install dependencies
-      run: npm install
-      
+      run: npm ci
+    
     - name: Build
       run: npm run build
       env:
         NODE_ENV: production
     
-    - name: Deploy to VPS
+    - name: Copy build folder to VPS
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_SSH_PORT || '22' }}
+        source: "build/*"
+        target: "/var/www/cmms-ui/build"
+    
+    - name: Deploy with PM2
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ secrets.VPS_HOST }}
@@ -34,37 +42,18 @@ jobs:
         key: ${{ secrets.VPS_SSH_KEY }}
         port: ${{ secrets.VPS_SSH_PORT || '22' }}
         script: |
-          # Pastikan Node.js & PM2 sudah ada
-          if ! command -v pm2 &> /dev/null
-          then
-            echo "Installing PM2..."
+          cd /var/www/cmms-ui
+
+          # Install PM2 kalau belum ada
+          if ! command -v pm2 &> /dev/null; then
             npm install -g pm2
           fi
 
-          # Kalau folder project belum ada → clone repo
-          if [ ! -d "/var/www/cmms-ui/.git" ]; then
-            mkdir -p /var/www
-            cd /var/www
-            git clone git@github.com:${{ github.repository }} cmms-ui
-            cd cmms-ui
-          else
-            cd /var/www/cmms-ui
-            git pull origin main
-          fi
-
-          # Install dependencies
-          npm install --production
-
-          # Build
-          npm run build
-
-          # Start or restart with PM2
+          # Start / Restart dengan PM2 serve (karena hasil build static React)
           if pm2 list | grep -q cmms-ui; then
             pm2 restart cmms-ui --update-env
           else
-            pm2 start npm --name "cmms-ui" -- start -- -p 8000
+            pm2 serve build 8000 --name "cmms-ui" --spa
           fi
 
-          # Save PM2 process list
           pm2 save
-
