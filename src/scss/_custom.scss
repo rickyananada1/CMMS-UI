@@ -1,0 +1,371 @@
+// Here you can add other styles
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+html {
+  font-family: 'Inter', sans-serif;
+}
+
+html::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+html::-webkit-scrollbar-track {
+  color: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: gray;
+  border-radius: 10px;
+}
+
+.bg-primary {
+  background-color: $primary-base;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  color: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: gray;
+  border-radius: 10px;
+}
+
+.header {
+  border: none;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-toggler {
+  box-shadow: 0px -4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bg-color-login {
+  background: rgb(3, 100, 252);
+  background: linear-gradient(325deg, rgba(3, 100, 252, 1) 50%, rgba(195, 218, 254, 1) 100%);
+}
+
+.inverted-bg {
+  //   position: relative;
+  border-bottom-right-radius: 100px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    background-color: white;
+    width: 100px;
+    height: 100px;
+    clip-path: polygon(100% 0, 0% 0, 0% 100%);
+    transform: rotate(180deg);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background-color: rgb(3, 100, 252);
+    border-bottom-right-radius: 100px;
+  }
+}
+
+.transparent {
+  background-color: transparent !important;
+  box-shadow: inset 0px 1px 0 rgba(0, 0, 0, 0.075);
+}
+
+.left-border-none {
+  border-left: none !important;
+  box-shadow: inset 0px 1px 0 rgba(0, 0, 0, 0.075);
+}
+
+.right-border-none {
+  border-right: none !important;
+  box-shadow: inset 0px 1px 0 rgba(0, 0, 0, 0.075);
+}
+
+.circle-icon-dropdown {
+  padding: 3px;
+  background: #e9f1fb;
+  color: #2671d9;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  line-height: 1px;
+  vertical-align: middle;
+}
+
+// ALERT STYLE
+.alert-danger {
+  --cui-alert-border-color: red;
+}
+
+// END ALERT STYLE
+
+// CARD STYLE
+.card-header {
+  padding-top: 2rem;
+  background-color: white;
+}
+
+.card {
+  --cui-card-border-color: none;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+}
+
+.card-b-left {
+  border-left: 15px solid #2671d9;
+}
+
+// END CARD STYLE
+
+input:focus,
+textarea:focus,
+li:focus {
+  outline: none;
+}
+
+.tab-active {
+  border-bottom-width: 4px;
+  border-color: rgb(3, 100, 252);
+}
+
+.dropdown-toggle::after {
+  display: none;
+}
+
+// DROPDOWN STYLE
+.dropdown-menu {
+  --cui-dropdown-border-color: none;
+  box-shadow: -11px 7px 73px -23px rgba(66, 68, 90, 1);
+  width: 300px;
+}
+
+.dropdown-menu-action {
+  transform: translate3d(0px, 36px, 0px) !important;
+}
+
+// END DROPDOWN STYLE
+
+// FORM STYLE
+.form-footer {
+  position: fixed;
+  right: 0px;
+  bottom: 0px;
+  justify-content: flex-end;
+  width: -webkit-fill-available;
+  background-color: #ffff;
+  border-top: 3px solid #d8dbe0;
+}
+
+// END FORM STYLE
+
+// MODAL STYLE
+.modal-content {
+  border: none;
+
+  .modal-header {
+    border: none;
+  }
+}
+
+// END MODAL STYLE
+
+.action-menu-scroll {
+  max-height: 350px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  text-align: center;
+  scrollbar-width: thin;
+  padding: 0px;
+}
+
+.selected-row {
+  &:hover {
+    background-color: #2671d958;
+    color: #2671d9;
+  }
+}
+
+.row-active {
+  background-color: #2671d958;
+  color: #2671d9;
+}
+
+.accordion-collapse.show {
+  visibility: visible !important;
+}
+
+.border-title {
+  width: 7px;
+  background-color: #2671d9;
+  height: 35px;
+  border-radius: 10px;
+  margin-right: 15px;
+}
+
+.nav-link {
+  @media (hover: hover), (-ms-high-contrast: none) {
+    &:hover {
+      color: rgb(38 113 217 / var(--tw-text-opacity, 1));
+      background: rgb(38 113 217 / var(--tw-bg-opacity, 1)) !important;
+      --tw-bg-opacity: 0.1;
+    }
+  }
+}
+
+.dashboard-title {
+  position: relative;
+  color: rgba(77, 94, 128, 1);
+  padding: 3px 1rem;
+  margin: 0;
+}
+
+.dashboard-title::before {
+  content: '';
+  position: absolute;
+  border-radius: 50px;
+  width: 5px;
+  height: 100%;
+  background-color: rgba(38, 113, 217, 1);
+  left: 0;
+  top: 0;
+}
+
+.custom-legend-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  /* Sedikit lebih kecil paddingnya */
+  border-radius: 8px;
+  font-family: sans-serif;
+  cursor: default;
+  /* Atau 'pointer' jika ada interaksi */
+  transition: background-color 0.2s ease;
+  width: 100%;
+  gap: 8px;
+}
+
+/* Jika ingin efek hover
+  .legend-item:hover {
+    background-color: #f0f0f0;
+  }
+  */
+
+.legend-color-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  position: relative;
+  top: -10px;
+}
+
+.legend-value {
+  font-weight: bold;
+  margin-right: 5px;
+  font-size: 1.5em;
+  /* Sesuaikan ukuran font */
+}
+
+.legend-label {
+  font-size: 0.85em;
+  /* Sesuaikan ukuran font */
+}
+
+/* Warna spesifik (sama seperti contoh sebelumnya) */
+.legend-item.item-normal {
+  background-color: #e6f7f1;
+}
+
+.legend-item.item-normal .legend-color-dot {
+  background-color: rgba(14, 169, 118, 1);
+}
+
+.legend-item.item-normal .legend-value {
+  color: rgba(14, 169, 118, 1);
+}
+
+.legend-item.item-alert {
+  background-color: #fff8e1;
+}
+
+.legend-item.item-alert .legend-color-dot {
+  background-color: rgba(255, 162, 41, 1);
+}
+
+.legend-item.item-alert .legend-value {
+  color: rgba(255, 162, 41, 1);
+}
+
+.legend-item.item-down {
+  background-color: #fdecea;
+}
+
+.legend-item.item-down .legend-color-dot {
+  background-color: rgba(255, 86, 86, 1);
+}
+
+.legend-item.item-down .legend-value {
+  color: rgba(255, 86, 86, 1);
+}
+
+.recent-report-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: rgba(244, 246, 246, 1);
+  border-radius: 10px;
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.recent-report-item {
+  opacity: 0;
+  transform: translateY(-20px);
+  animation-name: fadeInFromTop;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+}
+
+@keyframes fadeInFromTop {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recent-report-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.react-pdf__Page__textContent {
+  display: none !important;
+}
+
+.react-pdf__Page__annotations.annotationLayer {
+  display: none !important;
+}
+
+#pdf-download {
+  display: none !important;
+}

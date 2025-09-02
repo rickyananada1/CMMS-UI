@@ -1,0 +1,6 @@
+export * from './createRelation'
+export * from './downloadRelation'
+export * from './relationRequirements'
+export * from './updateRelation'
+export * from './getRelation'
+export * from './deleteRelation'

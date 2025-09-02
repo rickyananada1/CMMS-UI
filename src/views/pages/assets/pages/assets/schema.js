@@ -1,0 +1,48 @@
+import * as Yup from 'yup'
+
+const assetSchema = Yup.object()
+  .required('Field is required')
+  .shape({
+    asset_num: Yup.string().required('Field is required and must be unique'),
+    asset_description: Yup.string().required('Field is required'),
+    kks_number: Yup.string().required('Field is required and must be unique'),
+    asset_type: Yup.object().required('Field is required'),
+    existing_code: Yup.string().optional().nullable(true),
+    site_id: Yup.object().required('Field is required'),
+    location_id: Yup.object().required('Field is required'),
+    status: Yup.object().required('Field is required'),
+    asset_template: Yup.string().nullable(),
+    parent_id: Yup.object().optional().nullable(true),
+    bin: Yup.string().optional().nullable(true),
+    rotating_item: Yup.string().optional().nullable(true),
+    rotating_item_description: Yup.string().optional().nullable(true),
+    usage: Yup.string().optional().nullable(true),
+    meter_group_id: Yup.object().optional().nullable(true),
+    gl_account: Yup.string().optional().nullable(true),
+    calendar: Yup.string().optional().nullable(true),
+    shift: Yup.string().optional().nullable(true),
+    priority: Yup.string().optional().nullable(true),
+    serial: Yup.string().optional().nullable(true),
+    item_type: Yup.string().optional().nullable(true),
+    tool_rate: Yup.string().optional().nullable(true),
+    vendor_id: Yup.object().optional().nullable(true),
+    manufacture_id: Yup.object().optional().nullable(true),
+    instalation_date: Yup.string().optional().nullable(true),
+    purchase_price: Yup.string().optional().nullable(true),
+    replacement_cost: Yup.string().optional().nullable(true),
+    po: Yup.string().optional().nullable(true),
+    total_cost: Yup.string().optional().nullable(true),
+    ytd_cost: Yup.string().optional().nullable(true),
+    budgeted: Yup.string().optional().nullable(true),
+    inventory: Yup.string().optional().nullable(true),
+    asset_up: Yup.boolean().optional().nullable(true),
+    status_date: Yup.string().optional().nullable(true),
+    total_downtime: Yup.string().optional().nullable(true),
+    changed_by: Yup.string().optional().nullable(true),
+    changed_date: Yup.string().optional().nullable(true),
+    children_id: Yup.object().optional().nullable(true),
+    condition_code_id: Yup.object().optional().nullable(true),
+    failure_code_id: Yup.object().optional().nullable(true),
+  })
+
+export { assetSchema }

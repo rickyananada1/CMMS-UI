@@ -1,0 +1,6 @@
+export * from './getSpareParts'
+export * from './getSparePartsOption'
+export * from './createSpareParts'
+export * from './deleteSpareParts'
+export * from './updateSpareParts'
+export * from './downloadSpareParts'
