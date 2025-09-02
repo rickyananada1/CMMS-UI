@@ -20,7 +20,13 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm ci
+      run: |
+        # Generate package-lock.json if it doesn't exist
+        if [ ! -f package-lock.json ]; then
+          npm install
+        else
+          npm ci
+        fi
       
     - name: Build
       run: npm run build
@@ -37,6 +43,19 @@ jobs:
         script: |
           cd /var/www/cmms-ui
           git pull origin main
-          npm ci --production
+          
+          # Handle package-lock.json
+          if [ ! -f package-lock.json ]; then
+            npm install --production
+          else
+            npm ci --production
+          fi
+          
           npm run build
-          pm2 restart cmms-ui || pm2 start npm --name "cmms-ui" -- start -- -p 8000
+          
+          # Restart or start the application
+          if pm2 list | grep -q cmms-ui; then
+            pm2 restart cmms-ui
+          else
+            pm2 start npm --name "cmms-ui" -- start -- -p 8000
+          fi
