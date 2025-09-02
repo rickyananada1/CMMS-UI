@@ -16,9 +16,10 @@ sudo chown -R $USER:$USER /var/www/cmms-ui
 # Clone repository (replace with your repo URL)
 git clone https://github.com/yourusername/CMMS-UI.git /var/www/cmms-ui
 
-# Install dependencies
+# Install dependencies and generate package-lock.json
 cd /var/www/cmms-ui
-npm ci
+npm install --package-lock-only
+npm ci --production
 
 # Build the application
 npm run build

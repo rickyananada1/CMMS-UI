@@ -21,12 +21,10 @@ jobs:
     
     - name: Install dependencies
       run: |
-        # Generate package-lock.json if it doesn't exist
-        if [ ! -f package-lock.json ]; then
-          npm install
-        else
-          npm ci
-        fi
+        # Generate package-lock.json
+        npm install --package-lock-only
+        # Install dependencies
+        npm ci
       
     - name: Build
       run: npm run build
@@ -44,18 +42,21 @@ jobs:
           cd /var/www/cmms-ui
           git pull origin main
           
-          # Handle package-lock.json
-          if [ ! -f package-lock.json ]; then
-            npm install --production
-          else
-            npm ci --production
-          fi
+          # Ensure we have the latest package-lock.json
+          npm install --package-lock-only
           
+          # Install production dependencies
+          npm ci --production
+          
+          # Build the application
           npm run build
           
           # Restart or start the application
           if pm2 list | grep -q cmms-ui; then
-            pm2 restart cmms-ui
+            pm2 restart cmms-ui --update-env
           else
             pm2 start npm --name "cmms-ui" -- start -- -p 8000
           fi
+          
+          # Save PM2 process list
+          pm2 save
