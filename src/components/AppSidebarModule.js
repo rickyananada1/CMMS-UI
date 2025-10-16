@@ -29,7 +29,7 @@ const AppSidebarModule = () => {
     <CSidebar style={styles} position="fixed" unfoldable={false} visible={sidebarModule}>
       <CSidebarBrand className="d-none d-md-flex">
         <img
-          className="cursor-pointer sidebar-brand"
+          className="mt-2.5 cursor-pointer sidebar-brand"
           src={LogoCmmsSidebar}
           width={60}
           alt="logo_lite"
