@@ -6,7 +6,7 @@ import { CSidebar, CSidebarBrand, CSidebarNav, CSidebarFooter } from '@coreui/re
 
 import { AppHeaderDropdown } from './header'
 import AppSidebarModuleMenu from './AppSidebarModuleMenu'
-import LogoPlnLite from 'src/assets/images/Logo_PLN_Lite.png'
+import LogoCmmsSidebar from 'src/assets/images/cmms-sidebar-new-logo.png'
 import { appActions, breadcrumbActions } from 'src/store/actions'
 
 const styles = {
@@ -30,8 +30,8 @@ const AppSidebarModule = () => {
       <CSidebarBrand className="d-none d-md-flex">
         <img
           className="cursor-pointer sidebar-brand"
-          src={LogoPlnLite}
-          width={35}
+          src={LogoCmmsSidebar}
+          width={60}
           alt="logo_lite"
           onClick={handleClickLogo}
         />
@@ -39,7 +39,7 @@ const AppSidebarModule = () => {
       <CSidebarNav className="flex items-center mt-[35px]">
         <AppSidebarModuleMenu items={permissionsState} />
       </CSidebarNav>
-      <CSidebarFooter className="flex flex-column justify-center items-center">
+      <CSidebarFooter className="flex items-center justify-center flex-column">
         <AppHeaderDropdown />
       </CSidebarFooter>
     </CSidebar>

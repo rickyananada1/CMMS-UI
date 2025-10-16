@@ -16,7 +16,7 @@ import * as Yup from 'yup'
 // Assets
 import LogoPln from 'src/assets/images/pln_logo.png'
 import FooterLogin from 'src/assets/images/footer-login.png'
-import Cube from 'src/assets/images/Cube.png'
+import LogoCmmsBig from 'src/assets/images/cmms-big-new-logo.png'
 import useLogin from './hooks/useLogin'
 
 const Login = () => {
@@ -34,18 +34,14 @@ const Login = () => {
 
   return (
     <div className="bg-white">
-      <div className="bg-color-login min-vh-100 d-flex flex-row">
+      <div className="flex-row bg-color-login min-vh-100 d-flex">
         <div className="col inverted-bg d-flex flex-column justify-content-between">
-          <div className="w-100 my-4 px-4">
+          <div className="px-4 my-4 w-100">
             <img className="sidebar-brand-full" src={LogoPln} height={35} alt="logo_lite" />
           </div>
-          <div className="w-100 my-4 px-4">
+          <div className="px-4 my-4 w-100">
             <div className="d-flex flex-column justify-content-center align-items-center text-light">
-              <div className="d-flex align-items-center mb-4">
-                <img src={Cube} alt="cube" />
-                <div className="fs-1 fw-semibold">CMMS</div>
-              </div>
-              <p className="fs-4">Computerized Maintenance Management System</p>
+              <img className="" src={LogoCmmsBig} alt="big_logo" width={400} />
             </div>
           </div>
           <div className="w-100">
@@ -54,7 +50,7 @@ const Login = () => {
         </div>
         <div className="col">
           <div className="bg-white h-100" style={{ borderTopLeftRadius: '100px' }}>
-            <div className="mx-3 px-4 d-flex justify-content-center align-items-center h-100">
+            <div className="px-4 mx-3 d-flex justify-content-center align-items-center h-100">
               <div className="w-75">
                 <div className="mb-5">
                   <p className="fs-1 fw-semibold">Login</p>
@@ -125,7 +121,7 @@ const Login = () => {
                             </div>
                           </div>
                         )}
-                        <CCol className="text-center mt-5">
+                        <CCol className="mt-5 text-center">
                           <CCol xs={12}>
                             <CButton
                               color="primary"
@@ -140,7 +136,7 @@ const Login = () => {
                           <CCol xs={12} className="mt-4">
                             <Link
                               to="/forgot-password"
-                              className="text-decoration-none fs-6 fw-semibold p-3"
+                              className="p-3 text-decoration-none fs-6 fw-semibold"
                             >
                               Forgot password
                             </Link>
