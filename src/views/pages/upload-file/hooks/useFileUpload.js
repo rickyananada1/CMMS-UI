@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useUploadFile } from '../services/uploadFile'
 import { useGetFileUploaded } from '../services/getFileUploaded'
 import { useDeleteFile } from '../services/deleteFile'
@@ -6,21 +6,19 @@ import { useToast } from 'src/context/ToastContext'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
-const useFileUpload = ({ fieldName, uploadUrl, fetchUrl, mode, onDeletedFilesChange, formId }) => {
+const useFileUpload = ({ uploadUrl, fetchUrl, mode, formId, files, setFiles }) => {
   const { showToast } = useToast()
 
-  const [files, setFiles] = useState([])
   const [deletedFiles, setDeletedFiles] = useState([])
-  const [errorMessage, setErrorMessage] = useState('')
+  const [tempFiles, setTempFiles] = useState([])
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [duplicateFileError, setDuplicateFileError] = useState(null)
 
-  // Reset states when URL changes
   useEffect(() => {
-    if (!uploadUrl) {
-      setFiles([])
-      setDeletedFiles([])
-      setErrorMessage('')
+    if (isModalOpen) {
+      setTempFiles(files)
     }
-  }, [uploadUrl])
+  }, [isModalOpen, files, setTempFiles])
 
   // Move acceptedFileTypes into useMemo
   const acceptedFileTypes = useMemo(
@@ -73,100 +71,41 @@ const useFileUpload = ({ fieldName, uploadUrl, fetchUrl, mode, onDeletedFilesCha
         formId,
       }))
 
-      setFiles(formattedFiles)
+      if (setFiles) setFiles(formattedFiles)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getFileUploaded.data])
 
-  // Handle file drop
-  const onDrop = useCallback(
-    (acceptedFiles, setFieldValue, rejectedFiles, formId) => {
-      setErrorMessage('')
-
-      const validFiles = acceptedFiles.filter((file) => {
-        const isValidType = Object.values(acceptedFileTypes)
-          .flat()
-          .includes(`.${file.name.split('.').pop().toLowerCase()}`)
-        const isValidSize = file.size <= MAX_FILE_SIZE
-
-        return isValidType && isValidSize
-      })
-
-      if (rejectedFiles.length > 0 || validFiles.length !== acceptedFiles.length) {
-        setErrorMessage('Some files were rejected. Please check file type and size (max 10MB).')
-      }
-
-      const newFiles = validFiles.map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-        isNew: true,
-        formId,
-      }))
-
-      setFiles((prevFiles) => {
-        // Filter files for the current form
-        const currentFormFiles = prevFiles.filter((f) => f.formId === formId)
-        const otherFormFiles = prevFiles.filter((f) => f.formId !== formId)
-
-        // Check for duplicates within the current form
-        const updatedFiles = [...currentFormFiles]
-
-        newFiles.forEach((newFile) => {
-          const isDuplicate = updatedFiles.some(
-            (existingFile) => existingFile.file.name === newFile.file.name,
-          )
-
-          if (!isDuplicate) {
-            updatedFiles.push(newFile)
-          }
-        })
-
-        // Combine with files from other forms
-        const allFiles = [...otherFormFiles, ...updatedFiles]
-
-        // Update Formik field value with files for the current form
-        setFieldValue(
-          fieldName || 'files',
-          updatedFiles.map((f) => f.file),
-        )
-
-        return allFiles
-      })
-    },
-    [acceptedFileTypes, fieldName],
-  )
-
   const uploadFiles = async (uploadedFiles, overrideUrl = null, formId = null) => {
     const finalUploadUrl = overrideUrl || uploadUrl
+    const successfulUploads = []
+    const failedUploads = []
 
     if (!finalUploadUrl || !uploadedFiles?.length) {
-      return
+      return { successfulUploads, failedUploads }
     }
 
-    const formData = new FormData()
-
-    uploadedFiles.forEach((fileObj) => {
+    for (const fileObj of uploadedFiles) {
       const actualFile = fileObj.file || fileObj
       const isNew = fileObj.isNew ?? true
       const fileFormId = fileObj.formId ?? formId
 
       if (isNew && fileFormId === formId) {
+        const formData = new FormData()
         formData.append('files', actualFile)
+
+        try {
+          await uploadingFile.mutateAsync({
+            url: finalUploadUrl,
+            data: formData,
+          })
+          successfulUploads.push(fileObj)
+        } catch (err) {
+          failedUploads.push({ file: fileObj, error: err.message || 'Upload failed' })
+        }
       }
-    })
-
-    if ([...formData.entries()].length === 0) {
-      return
     }
-
-    try {
-      await uploadingFile.mutateAsync({
-        url: finalUploadUrl,
-        data: formData,
-      })
-    } catch (err) {
-      throw err
-    }
+    return { successfulUploads, failedUploads }
   }
 
   const handleDownload = async (event, fileUrl, fileName = 'download') => {
@@ -231,56 +170,13 @@ const useFileUpload = ({ fieldName, uploadUrl, fetchUrl, mode, onDeletedFilesCha
     }
   }
 
-  const removeFiles = (event, selectedIndexes, setFieldValue, file_id, formId) => {
-    event.stopPropagation()
-
-    if (!Array.isArray(selectedIndexes) || selectedIndexes.length === 0) return
-
-    let filesToDelete = []
-
-    setFiles((prevFiles) => {
-      const currentFormFiles = prevFiles.filter((f) => f.formId === formId)
-      const otherFormFiles = prevFiles.filter((f) => f.formId !== formId)
-      const filesToKeep = []
-
-      currentFormFiles.forEach((file, index) => {
-        if (selectedIndexes.includes(index)) {
-          if (!file.isNew) {
-            filesToDelete.push(file.file.file_id)
-          }
-        } else {
-          filesToKeep.push(file)
-        }
-      })
-
-      setFieldValue(
-        fieldName || 'files',
-        filesToKeep.map((f) => f.file),
-      )
-
-      return [...otherFormFiles, ...filesToKeep]
-    })
-
-    setDeletedFiles((prev) => {
-      const updatedDeletedFiles = [...new Set([...prev, ...filesToDelete])]
-      return updatedDeletedFiles
-    })
-  }
-
-  // Update useEffect to notify parent component of changes
-  useEffect(() => {
-    if (deletedFiles.length > 0) {
-      onDeletedFilesChange?.(deletedFiles) // Notify parent component
-    }
-  }, [deletedFiles, onDeletedFilesChange])
-
   const deletePendingFiles = async (filesToDelete = deletedFiles) => {
     if (!filesToDelete || filesToDelete.length === 0) {
       return
     }
 
     try {
-      const uniqueDeletedFiles = [...new Set(filesToDelete)]
+      const uniqueDeletedFiles = [...new Set(filesToDelete)].filter(Boolean)
 
       await Promise.all(
         uniqueDeletedFiles.map(async (fileId) => {
@@ -291,17 +187,44 @@ const useFileUpload = ({ fieldName, uploadUrl, fetchUrl, mode, onDeletedFilesCha
       throw error
     } finally {
       setDeletedFiles([])
-      onDeletedFilesChange?.([]) // Clear parent's state as well
+    }
+  }
+
+  const handleModalClose = (saveChanges) => {
+    if (saveChanges) {
+      setFiles(tempFiles)
+    } else {
+      setTempFiles(files)
+    }
+    setIsModalOpen(false)
+    setDuplicateFileError(null) // Clear error on modal close
+  }
+
+  const handleFileSelect = (event) => {
+    const selectedFiles = event.target.files ? Array.from(event.target.files) : []
+    const newFiles = selectedFiles.filter((file) => {
+      const isDuplicate = tempFiles.some((tempFile) => {
+        const tempFileName =
+          tempFile.file?.name || tempFile.name || tempFile.file?.file_path?.split('/').pop()
+        return tempFileName === file.name
+      })
+      return !isDuplicate
+    })
+
+    if (newFiles.length < selectedFiles.length) {
+      setDuplicateFileError(`Uploaded document can't be the same as an existing document.`)
+    } else {
+      setDuplicateFileError(null)
+    }
+
+    if (newFiles.length > 0) {
+      setTempFiles([...tempFiles, ...newFiles])
     }
   }
 
   const isLoading = getFileUploaded.isLoading || getFileUploaded.isFetching
 
   return {
-    files: files.filter((f) => f.formId === formId),
-    errorMessage,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
@@ -309,6 +232,14 @@ const useFileUpload = ({ fieldName, uploadUrl, fetchUrl, mode, onDeletedFilesCha
     handleDownload,
     deletePendingFiles,
     deletedFiles,
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
   }
 }
 

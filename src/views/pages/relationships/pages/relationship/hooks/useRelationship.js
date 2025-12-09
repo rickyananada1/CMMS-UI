@@ -24,10 +24,13 @@ const useRelationship = ({ mode, setAction, setTabIndex }) => {
 
   const [data, setData] = useState({})
   const [dataFile, setDataFile] = useState([])
+  const [files, setFiles] = useState([])
   const [errorMessage, setErrorMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isDrawerOpen, setDrawerOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
 
   const location = useLocation()
 
@@ -64,28 +67,25 @@ const useRelationship = ({ mode, setAction, setTabIndex }) => {
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const formId = useMemo(() => selectedRow?.asset_relation_id, [selectedRow])
 
   const {
-    files,
     errorMessage: messageError,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
 
@@ -93,7 +93,6 @@ const useRelationship = ({ mode, setAction, setTabIndex }) => {
     setFormDeletedFiles(deletedFiles)
   }, [deletedFiles])
 
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [formValue, setFormValue] = useState({
     asset_id: null,
     asset_relation_id: null,
@@ -108,11 +107,29 @@ const useRelationship = ({ mode, setAction, setTabIndex }) => {
     dispatch(relationshipsActions.setSelectedRelationship(param))
   }
 
+  const getDetailFile = useGetFileUploaded({
+    url: `/asset/relation/${selectedRow?.asset_relation_id}/attachment`,
+    config: {
+      enabled: false,
+    },
+  })
+
   useEffect(() => {
-    mode !== 'Create' ? getDetailRelationship() : setIsLoading(false)
+    if (mode !== 'Create') {
+      getDetailFile.refetch()
+      getDetailRelationship()
+    } else {
+      setIsLoading(false)
+    }
+
     mode === 'Delete' && handleDelete()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, mode])
+
+  useEffect(() => {
+    if (mode === 'Create') return
+    setDataFile(getDetailFile.data?.data?.data)
+  }, [getDetailFile.data, mode])
 
   const getDetailRelationship = async (params) => {
     setIsLoading(true)
@@ -239,29 +256,24 @@ const useRelationship = ({ mode, setAction, setTabIndex }) => {
             }
 
             if (mode === 'Update' && deletedFiles?.length > 0) {
-              await deletePendingFiles()
+              await deletePendingFiles(deletedFiles)
             }
 
             // Upload files with the correct URL
             if (files?.length > 0 && relationShipId) {
-              try {
-                await uploadFiles(files, fileUploadUrl)
-              } catch (err) {
-                // Handle Nginx 413 or general upload error
-                const status = err?.response?.status
-                if (status === 413) {
-                  throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-                }
-                if (status !== 202) {
-                  throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
-                }
+              const uploadResult = await uploadFiles(files, fileUploadUrl)
+              setUploadSummary(uploadResult)
+
+              if (uploadResult.failedUploads.length > 0) {
+                setIsUploadSummaryModalOpen(true)
+                return
               }
             }
 
             Notification.fire({
               icon: 'success',
               title: 'Success',
-              text: 'Relationship saved successfully',
+              text: `Relationship "${values?.relation_name}" ${messageSuccess}`,
               customClass: { confirmButton: 'btn btn-primary hover:text-white' },
               buttonsStyling: false,
             }).then(() => {
@@ -282,6 +294,22 @@ const useRelationship = ({ mode, setAction, setTabIndex }) => {
       .finally(() => {
         formikHelpers.setSubmitting(false)
       })
+  }
+
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/asset/relation/${selectedRow?.asset_relation_id}/attachment`
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId)
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
   }
 
   const handleDelete = async () => {
@@ -350,55 +378,62 @@ const useRelationship = ({ mode, setAction, setTabIndex }) => {
     },
   ]
 
-  const getDetailFile = useGetFileUploaded({
-    url: `/asset/relation/${selectedRow?.asset_relation_id}/attachment`,
-    config: {
-      enabled: false,
-    },
-  })
+  const handleOK = () => {
+    setTabIndex(0)
+    setAction('Read')
+  }
 
-  const { handleDownload: downloadFile } = useFileUpload({
-    fieldName: 'files',
-    uploadUrl: '',
-    fetchUrl: `/asset/relation/${selectedRow?.asset_relation_id}/attachment`,
-    mode,
-  })
+  const isNewFiles = useMemo(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    return hasNewFiles || hasDeletedFiles
+  }, [files, deletedFiles])
 
-  useEffect(() => {
-    if (mode !== 'Create') {
-      getDetailFile.refetch()
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, mode])
-
-  useEffect(() => {
-    if (mode === 'Create') return
-    setDataFile(getDetailFile.data?.data?.data)
-  }, [getDetailFile.data, mode])
+  const messageSuccess = useMemo(
+    () => (isNewFiles ? '& attachment document saved successfully' : 'saved successfully'),
+    [isNewFiles],
+  )
 
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
+      setFiles,
       messageError,
-      onDrop,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
+      setFiles,
       messageError,
-      onDrop,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
 
@@ -420,13 +455,20 @@ const useRelationship = ({ mode, setAction, setTabIndex }) => {
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
-    downloadFile,
     dataFile,
     isDrawerOpen,
     setDrawerOpen,
     selectedFile,
     setSelectedFile,
     handleOpenDrawer,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 
