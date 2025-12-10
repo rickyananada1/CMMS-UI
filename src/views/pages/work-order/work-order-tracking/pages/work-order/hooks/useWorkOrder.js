@@ -1,3 +1,5 @@
+/* eslint-disable */
+/* prettier-ignore-start */
 import { useEffect, useMemo, useState } from 'react'
 import { woTrackingActions } from '../../../slices/woTrackingSlices'
 import { useSelector, useDispatch } from 'react-redux'
@@ -14,6 +16,7 @@ import {
   useGetSites,
   useGetAssets,
   useGetWorkOrders,
+  useGetUserSites,
 } from '../services'
 import { useLocation } from 'react-router-dom'
 import Swal from 'sweetalert2'
@@ -104,6 +107,13 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     site_id: useSelector((state) => state.auth?.user?.site_id),
     site: useSelector((state) => state.auth?.user?.site),
   }
+  const userService = {
+    ticketid: useSelector((state) => state.auth?.user?.site),
+    // description: useSelector((state) => state.auth?.user?.description),
+  }
+  console.log(userService, 'userServiceuserService');
+  const user = useSelector((state) => state.auth);
+console.log(user, 'selector');
   const visiblePopUp = useSelector((state) => state.woTracking?.visiblePopUp)
 
   const [errorMessage, setErrorMessage] = useState('')
@@ -136,9 +146,9 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     site_id:
       userSite?.site_id !== null
         ? {
-            value: userSite?.site_id,
-            label: userSite?.site,
-          }
+          value: userSite?.site_id,
+          label: userSite?.site,
+        }
         : null,
     failure_code: null,
     classification: null,
@@ -167,6 +177,16 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
 
     job_plan_id: null,
     pm_id: null,
+
+  // ticketid: data?.data?.uuid
+  // ? {
+  //     value: data.data.uuid,
+  //     label: data.data.ticketid,
+  //     description: data.data.description,
+  //   }
+  // : null,
+  ticketid: null,
+  summary: null,
   })
   const [oldStatus, setOldStatus] = useState('')
 
@@ -202,9 +222,14 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
   const getLocations = useGetListLocation()
   const getAssets = useGetAssets()
   const getSites = useGetSites({ org_id: userOrgId })
+  console.log(getSites, 'userOrgId');
   const getFailureCodes = useGetFailureCodes()
   const getHazardGroup = useGetHazardGroup()
   const getWorkOrders = useGetWorkOrders()
+const site = useSelector((state) => state.auth?.user?.site);
+
+const getUserSites = useGetUserSites({ site });
+  console.log(getUserSites, 'getUserSitesgetUserSitesgetUserSites');
   const getJobPlanList = useGetJobPlanDropdown()
   const getPMList = useGetPreventiveMaintenanceDropdown()
 
@@ -306,6 +331,13 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         site_id: {
           value: data?.site_id,
           label: data?.site,
+        },
+      }),
+      ...(data?.uuid && {
+        ticketid: {
+          value: data.uuid,          
+          label: data.ticketid,      
+          description: data.description
         },
       }),
       ...(data?.failure_code !== null && {
@@ -448,7 +480,7 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
           wbs_id: values?.wbs_id,
           vendor_id: values?.vendor_id,
           gl_account_id: values?.gl_account_id,
-
+          service_request_id: values?.ticketid?.value,
           job_plan_id: values?.job_plan_id?.value,
           pm_id: values?.pm_id?.value,
 
@@ -554,9 +586,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Work Order already started ${
-            type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-          }`,
+          html: `Work Order already started ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
         }).then(async (result) => {
           if (result.isConfirmed || result.isDismissed) {
             resolve(false)
@@ -566,9 +597,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Work Order already closed ${
-            type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-          }`,
+          html: `Work Order already closed ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
         }).then(async (result) => {
           if (result.isConfirmed || result.isDismissed) {
             resolve(false)
@@ -578,9 +608,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Work Order already completed ${
-            type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-          }`,
+          html: `Work Order already completed ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
         }).then(async (result) => {
           if (result.isConfirmed || result.isDismissed) {
             resolve(false)
@@ -590,9 +619,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Work Order has a parent ${
-            type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-          }`,
+          html: `Work Order has a parent ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
         }).then(async (result) => {
           if (result.isConfirmed || result.isDismissed) {
             resolve(false)
@@ -655,9 +683,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     Notification.fire({
       icon: 'warning',
       title: 'Are you sure?',
-      text: `Do you want to delete ${data?.parent_wo ?? '-'} as a Parent of ${
-        data?.work_order_code
-      }?`,
+      text: `Do you want to delete ${data?.parent_wo ?? '-'} as a Parent of ${data?.work_order_code
+        }?`,
       showDenyButton: true,
       confirmButtonText: 'Confirm',
       denyButtonText: 'Cancel',
@@ -795,6 +822,7 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     getFailureCodes,
     getHazardGroup,
     getWorkOrders,
+    getUserSites,
     work_order_statuses,
     disableEdit,
     getJobPlanList,

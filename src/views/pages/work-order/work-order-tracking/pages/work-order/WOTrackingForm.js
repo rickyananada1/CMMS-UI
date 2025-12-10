@@ -1,3 +1,5 @@
+/* eslint-disable */
+/* prettier-ignore-start */
 import React from 'react'
 import {
   CContainer,
@@ -38,6 +40,7 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
     data,
     getJobPlanList,
     getPMList,
+    getUserSites,
     disableEdit,
     getScheduledDateFromPM,
     isLocationChanged,
@@ -331,7 +334,7 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                       disabled={disableEdit}
                     />
                     {errors.configuration_item_description &&
-                    touched.configuration_item_description ? (
+                      touched.configuration_item_description ? (
                       <div className="text-sm text-[#e55353] mt-1">
                         {errors.configuration_item_description}
                       </div>
@@ -954,6 +957,54 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                     />
                   </CCol>
                 </CRow>
+                <div className="flex items-center mt-2 justify-between -mx-2">
+                  <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
+                    Related To
+                  </p>
+                  <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
+                </div>
+                <CRow>
+                  <CCol md={3}>
+                    <CFormLabel className="text-primary fw-semibold">
+                      Service request <span className="text-red-main">*</span>
+                    </CFormLabel>
+                    {console.log(values, 'valuesvalues')}
+                    <Field
+                      name="ticketid"
+                      placeholder="Select Ticket"
+                      apiController={getUserSites}
+                      value={values?.ticketid}
+                      valueKey="uuid"
+                      labelKey="ticketid"
+                      otherKey={{
+                        description: 'description',
+                      }}
+                      onChange={(val) => {
+                        setFieldValue("ticketid", val);
+                        setFieldValue("description", val?.description || "");
+                      }}
+                      size="md"
+                      as={SelectPagination}
+                      isClearable
+                    />
+                    {errors.job_plan_id && touched.job_plan_id ? (
+                      <div className="text-sm text-[#e55353] mt-1">{errors.job_plan_id}</div>
+                    ) : null}
+                  </CCol>
+                  <CCol md={3}>
+                    <CFormLabel className="text-primary fw-semibold">Summary</CFormLabel>
+                    <Field
+                      name="description"
+                      placeholder="No Description"
+                      value={values?.description || '' }
+                      onChange={handleChange}
+                      size="md"
+                      disabled
+                      as={CFormTextarea}
+                    />
+                  </CCol>
+                </CRow>
+
                 <div className="flex items-center mt-2 justify-between -mx-2">
                   <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
                     Scheduling Information

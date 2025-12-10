@@ -1,3 +1,5 @@
+/* eslint-disable */
+/* prettier-ignore-start */
 import React, { useEffect } from 'react'
 import { TabsWrapper } from 'src/components/elements/tabs'
 import WOTrackingList from './pages/list/WOTrackingList'
@@ -16,6 +18,7 @@ import { breadcrumbActions } from 'src/store/actions'
 const WOTrackingTab = () => {
   const dispatch = useDispatch()
   const woTrackingState = useSelector((state) => state.woTracking)
+  console.log(woTrackingState, 'woTtttt')
   const woChildrenState = useSelector((state) => state.woChildern)
   const woLaborState = useSelector((state) => state.woLabor)
   const woMaterialsState = useSelector((state) => state.woMaterials)
@@ -561,6 +564,11 @@ const WOTrackingTab = () => {
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [woTrackingState.selectedAppIndex])
+
+  useEffect(() => {
+    console.log("TabsWrapper props chooseActionMenu:", chooseActionMenu);
+  // console.log("TabsWrapper props actionMenuCallback:", actionMenuCallback);
+  }, []);
 
   // Cleanup function to dispatch reset action when component is unmounted
   useEffect(() => {

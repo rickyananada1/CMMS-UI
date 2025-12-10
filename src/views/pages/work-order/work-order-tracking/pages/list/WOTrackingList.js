@@ -165,6 +165,7 @@ const WOTrackingList = () => {
             row.original?.work_order_id === selectedRow?.work_order_id
           }
           onRowClicked={(row) => {
+            console.log('hehehe:', row.original)
             setSelectedRow(row.original)
             resetSelectedTaskEtc()
           }}

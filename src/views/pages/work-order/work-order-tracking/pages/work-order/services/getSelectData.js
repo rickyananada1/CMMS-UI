@@ -89,6 +89,17 @@ const useGetWorkOrders = (props) => {
   })
 }
 
+const getUserSites = async ({ site, params, signal }) => {
+  return axios.get('/work-orders/servicerequestbysite/' + site, { params, signal })
+}
+
+const useGetUserSites = ({ site, config, params }) => {
+  return useMutation({
+    mutationFn: (mutationProps) => getUserSites({ site, params, ...mutationProps }),
+    ...config,
+  })
+}
+
 export {
   useGetWorkTypes,
   useGetWorkClassifications,
@@ -98,4 +109,5 @@ export {
   useGetSites,
   useGetAssets,
   useGetWorkOrders,
+  useGetUserSites,
 }
