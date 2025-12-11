@@ -1,59 +1,54 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useCreateAssetsWork } from '../services'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 import { useSelector } from 'react-redux'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
 
-const useAssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
+const useAssetsWorkForm = ({ setAction, setTabIndex }) => {
   const Notification = withReactContent(Swal)
   const selectedRow = useSelector((state) => state.assets?.selectedAsset)
 
+  const [isDrawerOpen, setDrawerOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [workOrderId, setWorkOrderId] = useState(null)
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
+
+  const handleOpenDrawer = () => {
+    setDrawerOpen(true)
+    setSelectedFile(null)
+  }
+
   const fieldName = 'files'
   const { uploadUrl, fetchUrl } = useMemo(() => {
-    if (mode === 'Update' && selectedRow?.work_order_id) {
-      const woId = selectedRow.work_order_id
-      return {
-        uploadUrl: `/work-orders/${woId}/attachment`,
-        fetchUrl: `/work-orders/${woId}/attachment`,
-      }
-    }
-    // For create mode, return empty strings
     return {
       uploadUrl: '',
       fetchUrl: '',
     }
-  }, [mode, selectedRow])
+  }, [])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const [files, setFiles] = useState([])
+
+  const formId = useMemo(() => '', [])
 
   const {
-    files,
     errorMessage,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode: 'Create', files, setFiles, formId })
 
-  const [formDeletedFiles, setFormDeletedFiles] = useState([])
-
-  useEffect(() => {
-    setFormDeletedFiles(deletedFiles)
-  }, [deletedFiles])
-
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const optionsWorkPriority = [
     {
       label: 'Emergency',
@@ -116,7 +111,7 @@ const useAssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
     },
   ]
 
-  const [formValue] = useState({
+  const [formValue, setFormValue] = useState({
     work_order_code: '',
     description: '',
     work_priority: '',
@@ -152,37 +147,33 @@ const useAssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
           let woId
           let fileUploadUrl
 
-          if (mode === 'Create') {
-            const response = await createAssetsWork.mutateAsync({
-              id: selectedRow?.asset_id,
-              data: payload,
-            })
-            woId = response.data?.data?.work_order_id
+          const response = await createAssetsWork.mutateAsync({
+            id: selectedRow?.asset_id,
+            data: payload,
+          })
+          woId = response.data?.data?.work_order_id
+          setWorkOrderId(woId)
 
-            if (!woId) {
-              throw new Error('Work ID not returned')
-            }
-
-            fileUploadUrl = `/work-orders/${woId}/attachment`
+          if (!woId) {
+            throw new Error('Work ID not returned')
           }
 
-          if (files?.length && woId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+          fileUploadUrl = `/work-orders/${woId}/attachment`
+
+          if (files?.length > 0 && woId) {
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Work Order saved successfully',
+            text: `Work Order "${values?.work_order_code}" ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -202,33 +193,83 @@ const useAssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
     })
   }
 
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/work-orders/${workOrderId}/attachment`
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId)
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(6)
+    setAction('Read')
+  }
+
+  const isNewFiles = useMemo(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    return hasNewFiles || hasDeletedFiles
+  }, [files, deletedFiles])
+
+  const messageSuccess = useMemo(
+    () => (isNewFiles ? '& attachment document saved successfully' : 'saved successfully'),
+    [isNewFiles],
+  )
+
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
+      setFiles,
       errorMessage,
-      onDrop,
-      mode,
-      removeFiles,
+      mode: 'Create',
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
+      setFiles,
       errorMessage,
-      onDrop,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
-      mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
 
   return {
     formValue,
+    setFormValue,
     isModalOpen,
     setIsModalOpen,
     optionsWorkPriority,
@@ -237,8 +278,20 @@ const useAssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
     fieldName,
     uploadUrl,
     fetchUrl,
-    formDeletedFiles,
     uploadModalProps,
+    isDrawerOpen,
+    setDrawerOpen,
+    selectedFile,
+    setSelectedFile,
+    handleOpenDrawer,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 

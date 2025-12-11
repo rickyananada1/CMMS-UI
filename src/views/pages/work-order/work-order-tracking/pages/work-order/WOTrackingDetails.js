@@ -298,6 +298,24 @@ const WOTrackingDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
           </CRow>
           <div className="flex items-center mt-2 justify-between -mx-2">
             <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
+              Related To
+            </p>
+            <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
+          </div>
+          <CRow>
+            <CCol md={3}>
+              <label className="text-neutral-text-field">Service Request</label>
+              <br />
+              <span className="font-semibold">{data?.service_request ?? '-'}</span>
+            </CCol>
+            <CCol md={3}>
+              <label className="text-neutral-text-field">Summary</label>
+              <br />
+              <span className="font-semibold">{data?.service_request_description || '-'}</span>
+            </CCol>
+          </CRow>
+          <div className="flex items-center mt-2 justify-between -mx-2">
+            <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
               Scheduling Information
             </p>
             <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>

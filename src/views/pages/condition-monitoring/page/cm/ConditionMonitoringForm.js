@@ -21,6 +21,8 @@ import { cilPlus } from '@coreui/icons'
 import { CiPaperplane } from 'react-icons/ci'
 import { conditionMonitoringSchema } from './schema'
 import UploadFileModal from 'src/views/pages/upload-file/components/UploadFileModal'
+import InputFile from 'src/components/elements/input/InputFile'
+import UploadSummaryModal from 'src/views/pages/upload-file/components/UploadSummaryModal'
 
 const ConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
   const {
@@ -35,7 +37,16 @@ const ConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
     getPMDropdown,
     isModalOpen,
     setIsModalOpen,
+    handleModalClose,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   } = useConditionMonitoringForm({
     mode,
     setAction,
@@ -386,19 +397,11 @@ const ConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
                             <CFormLabel className="text-primary fw-semibold w-100">
                               Attachments
                             </CFormLabel>
-                            <CButton
-                              color="primary"
-                              className="hover:text-white"
-                              type="button"
-                              onClick={() => setIsModalOpen(true)}
-                            >
-                              Upload File
-                            </CButton>
+                            <InputFile setIsModalOpen={setIsModalOpen} files={files} />
                           </div>
                           <UploadFileModal
-                            visible={isModalOpen}
-                            setVisible={setIsModalOpen}
-                            setFieldValue={setFieldValue}
+                            isModalOpen={isModalOpen}
+                            handleModalClose={handleModalClose}
                             {...uploadModalProps}
                           />
                           {errors &&
@@ -1229,7 +1232,7 @@ const ConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
                     color="primary"
                     className="hover:text-white"
                     type="submit"
-                    disabled={isSubmitting || !(dirty && isValid)}
+                    disabled={isSubmitting || (!(dirty && isValid) && !isNewFiles)}
                   >
                     <div className="flex items-center justify-center">
                       {isSubmitting ? (
@@ -1249,6 +1252,15 @@ const ConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
           )
         }}
       </Formik>
+      <UploadSummaryModal
+        visible={isUploadSummaryModalOpen}
+        setVisible={setIsUploadSummaryModalOpen}
+        successfulUploads={uploadSummary.successfulUploads}
+        failedUploads={uploadSummary.failedUploads}
+        uploadFiles={uploadFiles}
+        onRetryUpload={handleRetryUpload}
+        onOK={handleOK}
+      />
     </div>
   )
 }

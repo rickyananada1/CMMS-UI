@@ -1,3 +1,5 @@
+/* eslint-disable */
+/* prettier-ignore-start */
 import { useEffect, useMemo, useState } from 'react'
 import { woTrackingActions } from '../../../slices/woTrackingSlices'
 import { useSelector, useDispatch } from 'react-redux'
@@ -14,6 +16,7 @@ import {
   useGetSites,
   useGetAssets,
   useGetWorkOrders,
+  useGetUserSites,
 } from '../services'
 import { useLocation } from 'react-router-dom'
 import Swal from 'sweetalert2'
@@ -104,9 +107,14 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     site_id: useSelector((state) => state.auth?.user?.site_id),
     site: useSelector((state) => state.auth?.user?.site),
   }
+  const userService = {
+    ticketid: useSelector((state) => state.auth?.user?.site),
+    // description: useSelector((state) => state.auth?.user?.description),
+  }
+  const user = useSelector((state) => state.auth)
   const visiblePopUp = useSelector((state) => state.woTracking?.visiblePopUp)
 
-  const [errorMessage, setErrorMessage] = useState('')
+  const [errorMessagePage, setErrorMessage] = useState('')
   const [data, setData] = useState({})
   const [isLoading, setIsLoading] = useState(true)
   const [disableEdit, setDisableEdit] = useState(false)
@@ -114,10 +122,11 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
   const [isAssetChanged, setIsAssetChanged] = useState(false)
   const [isLocationDisabled, setIsLocationDisabled] = useState(false)
   const [isLocationFirst, setIsLocationFirst] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [dataFile, setDataFile] = useState([])
   const [isDrawerOpen, setDrawerOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
 
   const handleOpenDrawer = () => {
     setDrawerOpen(true)
@@ -167,6 +176,9 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
 
     job_plan_id: null,
     pm_id: null,
+
+    ticketid: null,
+    summary: null,
   })
   const [oldStatus, setOldStatus] = useState('')
 
@@ -205,6 +217,9 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
   const getFailureCodes = useGetFailureCodes()
   const getHazardGroup = useGetHazardGroup()
   const getWorkOrders = useGetWorkOrders()
+  const site = useSelector((state) => state.auth?.user?.site)
+
+  const getUserSites = useGetUserSites({ site })
   const getJobPlanList = useGetJobPlanDropdown()
   const getPMList = useGetPreventiveMaintenanceDropdown()
 
@@ -246,30 +261,43 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const [files, setFiles] = useState([])
+
+  const formId = useMemo(() => selectedRow?.work_order_id, [selectedRow])
 
   const {
-    files,
-    errorMessage: messageError,
-    onDrop,
-    removeFiles,
+    errorMessage,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
+  const [isNewFiles, setIsNewFiles] = useState(false)
+  const [messageSuccess, setMessageSuccess] = useState('')
+
+  useEffect(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    setIsNewFiles(hasNewFiles || hasDeletedFiles)
+
+    const message =
+      hasNewFiles || hasDeletedFiles
+        ? '& attachment document saved successfully'
+        : 'saved successfully'
+    setMessageSuccess(message)
+  }, [files, deletedFiles])
 
   useEffect(() => {
     setFormDeletedFiles(deletedFiles)
@@ -306,6 +334,13 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         site_id: {
           value: data?.site_id,
           label: data?.site,
+        },
+      }),
+      ...(data?.uuid && {
+        ticketid: {
+          value: data.uuid,
+          label: data.ticketid,
+          description: data.description,
         },
       }),
       ...(data?.failure_code !== null && {
@@ -448,7 +483,7 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
           wbs_id: values?.wbs_id,
           vendor_id: values?.vendor_id,
           gl_account_id: values?.gl_account_id,
-
+          service_request_id: values?.ticketid?.value,
           job_plan_id: values?.job_plan_id?.value,
           pm_id: values?.pm_id?.value,
 
@@ -468,10 +503,9 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
           is_location_first: values?.is_location_first,
         }
 
+        let woId
+        let fileUploadUrl
         try {
-          let woId
-          let fileUploadUrl
-
           if (mode === 'Create') {
             const response = await createWorkOrder.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.work_order_id
@@ -496,27 +530,24 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
 
           // Handle file operations
           if (mode === 'Update' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
           // Upload files with the correct URL
           if (files?.length > 0 && woId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Work Order saved successfully',
+            text: `Work Order ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -534,6 +565,27 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         }
       }
     })
+  }
+
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/asset/${selectedRow?.asset_id}/attachment` // Assuming assetId is available
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId) // Pass formId if needed
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(0)
+    setAction('Read')
   }
 
   const deleteWorkOrderService = useDeleteWorkOrder()
@@ -554,9 +606,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Work Order already started ${
-            type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-          }`,
+          html: `Work Order already started ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
         }).then(async (result) => {
           if (result.isConfirmed || result.isDismissed) {
             resolve(false)
@@ -566,9 +617,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Work Order already closed ${
-            type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-          }`,
+          html: `Work Order already closed ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
         }).then(async (result) => {
           if (result.isConfirmed || result.isDismissed) {
             resolve(false)
@@ -578,9 +628,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Work Order already completed ${
-            type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-          }`,
+          html: `Work Order already completed ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
         }).then(async (result) => {
           if (result.isConfirmed || result.isDismissed) {
             resolve(false)
@@ -590,9 +639,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Work Order has a parent ${
-            type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-          }`,
+          html: `Work Order has a parent ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
         }).then(async (result) => {
           if (result.isConfirmed || result.isDismissed) {
             resolve(false)
@@ -655,9 +703,8 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     Notification.fire({
       icon: 'warning',
       title: 'Are you sure?',
-      text: `Do you want to delete ${data?.parent_wo ?? '-'} as a Parent of ${
-        data?.work_order_code
-      }?`,
+      text: `Do you want to delete ${data?.parent_wo ?? '-'} as a Parent of ${data?.work_order_code
+        }?`,
       showDenyButton: true,
       confirmButtonText: 'Confirm',
       denyButtonText: 'Cancel',
@@ -733,13 +780,6 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     },
   })
 
-  const { handleDownload: downloadFile } = useFileUpload({
-    fieldName: 'files',
-    uploadUrl: '',
-    fetchUrl: `/work-orders/${selectedRow?.work_order_id}/attachment`,
-    mode,
-  })
-
   useEffect(() => {
     if (mode !== 'Create') {
       getDetailFile.refetch()
@@ -755,37 +795,54 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
-      messageError,
-      onDrop,
+      setFiles,
+      errorMessage,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
-      messageError,
-      onDrop,
-      removeFiles,
+      setFiles,
+      errorMessage,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
 
   return {
     data,
     isLoading,
-    errorMessage,
+    errorMessagePage,
     formValue,
     selectedRow,
     setSelectedRow,
     handleSubmit,
-    downloadFile,
     getWorkTypes,
     getWorkPriorities,
     getWorkClassifications,
@@ -795,6 +852,7 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     getFailureCodes,
     getHazardGroup,
     getWorkOrders,
+    getUserSites,
     work_order_statuses,
     disableEdit,
     getJobPlanList,
@@ -821,6 +879,14 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     selectedFile,
     setSelectedFile,
     handleOpenDrawer,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 

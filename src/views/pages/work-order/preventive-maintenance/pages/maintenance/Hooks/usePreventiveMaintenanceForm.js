@@ -38,38 +38,50 @@ const usePreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const [files, setFiles] = useState([])
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
+
+  const formId = useMemo(() => selectedRow?.preventive_maintenance_id, [selectedRow])
 
   const {
-    files,
     errorMessage,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
-  // Track deleted files in component state
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
+  const [isNewFiles, setIsNewFiles] = useState(false)
+  const [messageSuccess, setMessageSuccess] = useState('')
 
-  // Update formDeletedFiles when deletedFiles changes
+  useEffect(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    setIsNewFiles(hasNewFiles || hasDeletedFiles)
+
+    const message =
+      hasNewFiles || hasDeletedFiles
+        ? '& attachment document saved successfully'
+        : 'saved successfully'
+    setMessageSuccess(message)
+  }, [files, deletedFiles])
+
   useEffect(() => {
     setFormDeletedFiles(deletedFiles)
   }, [deletedFiles])
 
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [formValue, setFormValue] = useState({
     site_id: auth?.site_id !== null ? { value: auth?.site_id, label: auth?.site } : null,
     organization_id:
@@ -194,10 +206,9 @@ const usePreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
           location_id: values.location_id?.value,
         }
 
+        let preventiveMaintenanceId
+        let fileUploadUrl
         try {
-          let preventiveMaintenanceId
-          let fileUploadUrl
-
           // First handle the main form submission
           if (mode === 'Create') {
             const response = await createPreventiveMaintenance.mutateAsync({ data: newValues })
@@ -228,27 +239,24 @@ const usePreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
 
           // Handle file operations
           if (mode === 'Update' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
           // Upload files with the correct URL
           if (files?.length > 0 && preventiveMaintenanceId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Preventive Maintenance saved successfully',
+            text: `Preventive Maintenance ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -268,28 +276,67 @@ const usePreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
     })
   }
 
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/asset/${selectedRow?.asset_id}/attachment` // Assuming assetId is available
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId) // Pass formId if needed
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(0)
+    setAction('Read')
+  }
+
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
+      setFiles,
       errorMessage,
-      onDrop,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
+      setFiles,
       errorMessage,
-      onDrop,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
 
@@ -308,6 +355,14 @@ const usePreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 

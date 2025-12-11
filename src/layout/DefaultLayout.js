@@ -26,7 +26,7 @@ const DefaultLayout = () => {
       breadcrumbState.breadcrumb.length > 0 ? breadcrumbState.breadcrumb[0]?.name : 'Dashboard'
     const activeApp = permissionsState.find((item) => item.modul_name === modulName)
 
-    dispatch(appActions.setApplications(activeApp.applications))
+    dispatch(appActions.setApplications(activeApp?.applications ?? []))
     dispatch(appActions.setSelectedApplications(activeApp))
     dispatch(appActions.setSidebarApplications(false))
   }

@@ -17,6 +17,8 @@ import { assetSchema } from '../schema'
 import CurrencyInput from 'react-currency-input-field'
 import { DetailCard } from 'src/components/elements/cards'
 import UploadFileModal from 'src/views/pages/upload-file/components/UploadFileModal'
+import InputFile from 'src/components/elements/input/InputFile'
+import UploadSummaryModal from 'src/views/pages/upload-file/components/UploadSummaryModal'
 
 const AssetsForm = ({ mode, setAction, setTabIndex }) => {
   const {
@@ -36,7 +38,16 @@ const AssetsForm = ({ mode, setAction, setTabIndex }) => {
     auth,
     isModalOpen,
     setIsModalOpen,
+    handleModalClose,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   } = useAsset({
     mode,
     setAction,
@@ -263,58 +274,17 @@ const AssetsForm = ({ mode, setAction, setTabIndex }) => {
                         <CFormLabel className="text-primary fw-semibold w-100">
                           Attachments
                         </CFormLabel>
-                        <CButton
-                          color="primary"
-                          className="hover:text-white"
-                          type="button"
-                          onClick={() => setIsModalOpen(true)}
-                        >
-                          Upload File
-                        </CButton>
+                        <InputFile setIsModalOpen={setIsModalOpen} files={files} />
                       </div>
                       <UploadFileModal
-                        visible={isModalOpen}
-                        setVisible={setIsModalOpen}
-                        setFieldValue={setFieldValue}
+                        isModalOpen={isModalOpen}
+                        handleModalClose={handleModalClose}
                         {...uploadModalProps}
                       />
                       {errors && errors.data?.attachment && touched && touched.data?.attachment ? (
                         <div className="text-sm text-[#b03434] mt-1">{errors.data.attachment}</div>
                       ) : null}
                     </div>
-                    {/* <div className="col-md-3 mb-4">
-                      <CFormLabel className="text-primary fw-semibold">Attachments</CFormLabel>
-                      <Field
-                        name="file_url"
-                        placeholder="Attachment"
-                        type="file"
-                        value={undefined}
-                        accept="application/pdf,application/vnd.ms-excel,image/jpeg,image/jpg,text/plain,application/msword"
-                        onBlur={() => setFieldTouched('file_url')}
-                        onChange={(val) => {
-                          const value = val.currentTarget.files[0]
-                          setFieldValue('file_url', value)
-                        }}
-                        size="md"
-                        as={CFormInput}
-                      />
-                      {(mode === 'Update' || values.file_url !== '') && (
-                        <div
-                          className="text-sm text-primary mt-1 underline cursor-pointer"
-                          onClick={() => handleDownload()}
-                        >
-                          Link file attachment
-                        </div>
-                      )}
-                      {errors &&
-                      errors.data?.condition_monitoring?.attachment &&
-                      touched &&
-                      touched.data?.condition_monitoring?.attachment ? (
-                        <div className="text-sm text-[#b03434] mt-1">
-                          {errors.data.condition_monitoring.attachment}
-                        </div>
-                      ) : null}
-                    </div> */}
                   </div>
                 </div>
 
@@ -1107,51 +1077,6 @@ const AssetsForm = ({ mode, setAction, setTabIndex }) => {
                     </div>
                   </div>
                 </div>
-
-                {/* <div className="flex items-center mt-2 justify-between">
-                  <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
-                    Modified
-                  </p>
-                  <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
-                </div>
-
-                <div className="my-2">
-                  <div className="row">
-                    <div className="col-md-3 mb-4">
-                      <CFormLabel className="text-primary fw-semibold">Changed By</CFormLabel>
-                      <Field
-                        name="changed_by"
-                        placeholder="Enter Changed By"
-                        value={values.changed_by}
-                        onChange={(val) => {
-                          setFieldValue('changed_by', val.target.value)
-                        }}
-                        disabled={isSubmitting}
-                        as={CFormInput}
-                      />
-                      {errors && errors.changed_by && touched && touched.changed_by ? (
-                        <div className="text-sm text-[#b03434] mt-1">{errors.changed_by}</div>
-                      ) : null}
-                    </div>
-                    <div className="col-md-3 mb-4">
-                      <CFormLabel className="text-primary fw-semibold">Changed Date</CFormLabel>
-                      <Field
-                        name="changed_date"
-                        placeholder="Enter Changed Date"
-                        value={values.changed_date}
-                        onChange={(val) => {
-                          setFieldValue('changed_date', val.target.value)
-                        }}
-                        type="date"
-                        disabled={isSubmitting}
-                        as={CFormInput}
-                      />
-                      {errors && errors.changed_date && touched && touched.changed_date ? (
-                        <div className="text-sm text-[#b03434] mt-1">{errors.changed_date}</div>
-                      ) : null}
-                    </div>
-                  </div>
-                </div> */}
               </DetailCard>
               <CFooter className="form-footer">
                 <div className="ml-[80px] w-full my-2 flex items-center justify-between">
@@ -1188,7 +1113,7 @@ const AssetsForm = ({ mode, setAction, setTabIndex }) => {
                       color="primary"
                       className="hover:text-white"
                       type="submit"
-                      disabled={!(isValid && dirty) || isSubmitting}
+                      disabled={(!(isValid && dirty) && !isNewFiles) || isSubmitting}
                     >
                       <div className="flex items-center justify-center">
                         {isSubmitting ? (
@@ -1209,6 +1134,15 @@ const AssetsForm = ({ mode, setAction, setTabIndex }) => {
           )
         }}
       </Formik>
+      <UploadSummaryModal
+        visible={isUploadSummaryModalOpen}
+        setVisible={setIsUploadSummaryModalOpen}
+        successfulUploads={uploadSummary.successfulUploads}
+        failedUploads={uploadSummary.failedUploads}
+        uploadFiles={uploadFiles}
+        onRetryUpload={handleRetryUpload}
+        onOK={handleOK}
+      />
     </div>
   )
 }

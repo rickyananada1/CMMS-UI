@@ -31,6 +31,7 @@ import { relationshipsSlice } from 'src/views/pages/relationships/slices/relatio
 import { jobPlanSlice } from 'src/views/pages/job-plan/slices/jobPlanSlices'
 import { quickReportingSlice } from 'src/views/pages/work-order/quick-reporting/slices/quickReportingSlices'
 import { preventiveMaintenanceSlice } from 'src/views/pages/work-order/preventive-maintenance/slices/preventiveMaintenanceSlices'
+import { serviceRequestSlice } from 'src/views/pages/work-order/service-request/slices/serviceRequestSlice'
 
 // Init Reducer
 const rootReducer = combineReducers({
@@ -46,6 +47,7 @@ const rootReducer = combineReducers({
   [locationSafetySlices.name]: locationSafetySlices.reducer,
   [assetsSafetySlices.name]: assetsSafetySlices.reducer,
   [assetSlice.name]: assetSlice.reducer,
+  [serviceRequestSlice.name]: serviceRequestSlice.reducer,
   [woTrackingSlice.name]: woTrackingSlice.reducer,
   [woChildernSlice.name]: woChildernSlice.reducer,
   [woTaskSlice.name]: woTaskSlice.reducer,
@@ -77,6 +79,7 @@ const persistConfig = {
     locationSafetySlices.name,
     assetsSafetySlices.name,
     assetSlice.name,
+    serviceRequestSlice.name,
     woTrackingSlice.name,
     woChildernSlice.name,
     woTaskSlice.name,

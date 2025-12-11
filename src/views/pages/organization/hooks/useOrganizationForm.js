@@ -36,32 +36,33 @@ const useOrganizationForm = (mode, setAction, setTabIndex) => {
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const [files, setFiles] = useState([])
+
+  const formId = useMemo(() => selectedRow?.organization_id, [selectedRow])
 
   const {
-    files,
     errorMessage,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
+  const [isNewFiles, setIsNewFiles] = useState(false)
+  const [messageSuccess, setMessageSuccess] = useState('')
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
   const [formValue, setFormValue] = useState({
     organization_id: '',
     organization_name: '',
@@ -225,26 +226,23 @@ const useOrganizationForm = (mode, setAction, setTabIndex) => {
           }
 
           if (mode === 'Update' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
           if (files?.length > 0 && organizationId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Organization saved successfully',
+            text: `Organization ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -264,30 +262,81 @@ const useOrganizationForm = (mode, setAction, setTabIndex) => {
     })
   }
 
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/administration/organizations/${selectedRow?.job_plan_id}/attachments`
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId)
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(0)
+    setAction('Read')
+  }
+
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
+      setFiles,
       errorMessage,
-      onDrop,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       handleDownload,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
+      setFiles,
       errorMessage,
-      onDrop,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
+
+  useEffect(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    setIsNewFiles(hasNewFiles || hasDeletedFiles)
+
+    const message =
+      hasNewFiles || hasDeletedFiles
+        ? '& attachment document saved successfully'
+        : 'saved successfully'
+    setMessageSuccess(message)
+  }, [files, deletedFiles])
 
   return {
     errorMessage,
@@ -305,6 +354,14 @@ const useOrganizationForm = (mode, setAction, setTabIndex) => {
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 

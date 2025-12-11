@@ -7,8 +7,11 @@ import { CNavItem, CTooltip } from '@coreui/react'
 import { useLocation } from 'react-router-dom'
 
 const AppSidebarModule = ({ items }) => {
+  console.log(items, 'sss')
   const location = useLocation()
+  console.log(location, 'lc')
   const dispatch = useDispatch()
+  console.log(dispatch, 'dp')
 
   const hasAnyActivePermission = (modules) => {
     if (!Array.isArray(modules)) return []
@@ -26,6 +29,8 @@ const AppSidebarModule = ({ items }) => {
   }
 
   const renderNavItem = (item, index) => {
+    console.log(item, 'item')
+    console.log(index, 'idx')
     const { modul_name, modul_icon, modul_menu_link, applications, ...rest } = item
 
     const handleClickModule = () => {
