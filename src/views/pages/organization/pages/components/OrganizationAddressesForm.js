@@ -3,10 +3,13 @@ import CIcon from '@coreui/icons-react'
 import { cilPlus } from '@coreui/icons'
 import { BsTrash } from 'react-icons/bs'
 import { Form, Formik, FieldArray, Field } from 'formik'
-import { CButton, CCard, CCardBody, CFormInput, CFormLabel, CFooter } from '@coreui/react'
+import { CButton, CCard, CCardBody, CFormInput, CFormLabel, CFooter, CSpinner } from '@coreui/react'
 import { Select } from 'src/components/elements/select'
 import useAddressesForm from '../../hooks/useAddressesForm'
 import UploadFileModal from 'src/views/pages/upload-file/components/UploadFileModal'
+import InputFile from 'src/components/elements/input/InputFile'
+import UploadSummaryModal from 'src/views/pages/upload-file/components/UploadSummaryModal'
+import { CiPaperplane } from 'react-icons/ci'
 
 const OrganizationAddressesForm = ({ mode, setAction, setTabIndex }) => {
   const {
@@ -19,7 +22,16 @@ const OrganizationAddressesForm = ({ mode, setAction, setTabIndex }) => {
     selectedOrganizationAddresss,
     isModalOpen,
     setIsModalOpen,
+    handleModalClose,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   } = useAddressesForm(mode, setAction, setTabIndex)
   return (
     <div>
@@ -31,7 +43,16 @@ const OrganizationAddressesForm = ({ mode, setAction, setTabIndex }) => {
           onSubmit={handleSubmit}
         >
           {(props) => {
-            const { setFieldValue, setFieldTouched, values, errors, touched } = props
+            const {
+              setFieldValue,
+              setFieldTouched,
+              values,
+              errors,
+              touched,
+              dirty,
+              isValid,
+              isSubmitting,
+            } = props
 
             return (
               <Form>
@@ -296,19 +317,11 @@ const OrganizationAddressesForm = ({ mode, setAction, setTabIndex }) => {
                                       <CFormLabel className="text-primary fw-semibold w-100">
                                         Attachments
                                       </CFormLabel>
-                                      <CButton
-                                        color="primary"
-                                        className="hover:text-white"
-                                        type="button"
-                                        onClick={() => setIsModalOpen(true)}
-                                      >
-                                        Upload File
-                                      </CButton>
+                                      <InputFile setIsModalOpen={setIsModalOpen} files={files} />
                                     </div>
                                     <UploadFileModal
-                                      visible={isModalOpen}
-                                      setVisible={setIsModalOpen}
-                                      setFieldValue={setFieldValue}
+                                      isModalOpen={isModalOpen}
+                                      handleModalClose={handleModalClose}
                                       {...uploadModalProps}
                                     />
                                     {errors &&
@@ -361,18 +374,29 @@ const OrganizationAddressesForm = ({ mode, setAction, setTabIndex }) => {
                       color="danger"
                       variant="outline"
                       onClick={() => {
-                        setAction('view')
+                        setTabIndex(2)
+                        setAction('Read')
                       }}
                     >
                       Cancel
                     </CButton>
                     <CButton
+                      disabled={isSubmitting || (!(dirty && isValid) && !isNewFiles)}
+                      color="primary"
+                      className="hover:text-white"
                       type="submit"
-                      // onClick={() => {
-                      //   // setAction('view')
-                      // }}
                     >
-                      Submit
+                      <div className="flex items-center justify-center">
+                        {isSubmitting ? (
+                          <>
+                            Submit <CSpinner className="ms-2" color="light" size="sm" />
+                          </>
+                        ) : (
+                          <>
+                            Submit <CiPaperplane className="ms-2" />
+                          </>
+                        )}
+                      </div>
                     </CButton>
                   </div>
                 </CFooter>
@@ -380,6 +404,15 @@ const OrganizationAddressesForm = ({ mode, setAction, setTabIndex }) => {
             )
           }}
         </Formik>
+        <UploadSummaryModal
+          visible={isUploadSummaryModalOpen}
+          setVisible={setIsUploadSummaryModalOpen}
+          successfulUploads={uploadSummary.successfulUploads}
+          failedUploads={uploadSummary.failedUploads}
+          uploadFiles={uploadFiles}
+          onRetryUpload={handleRetryUpload}
+          onOK={handleOK}
+        />
       </div>
     </div>
   )

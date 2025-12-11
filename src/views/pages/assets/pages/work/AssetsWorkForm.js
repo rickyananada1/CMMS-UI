@@ -14,6 +14,8 @@ import { CiPaperplane } from 'react-icons/ci'
 import useAssetsWorkForm from './hooks/useAssetsWorkForm'
 import { assetsWorkSchema } from './schema/assetsWorkSchema'
 import UploadFileModal from 'src/views/pages/upload-file/components/UploadFileModal'
+import InputFile from 'src/components/elements/input/InputFile'
+import UploadSummaryModal from 'src/views/pages/upload-file/components/UploadSummaryModal'
 
 const AssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
   const {
@@ -23,7 +25,16 @@ const AssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
     handleSubmit,
     isModalOpen,
     setIsModalOpen,
+    handleModalClose,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   } = useAssetsWorkForm({
     mode,
     setAction,
@@ -177,19 +188,11 @@ const AssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
                         <CFormLabel className="text-primary fw-semibold w-100">
                           Attachments
                         </CFormLabel>
-                        <CButton
-                          color="primary"
-                          className="hover:text-white"
-                          type="button"
-                          onClick={() => setIsModalOpen(true)}
-                        >
-                          Upload File
-                        </CButton>
+                        <InputFile setIsModalOpen={setIsModalOpen} files={files} />
                       </div>
                       <UploadFileModal
-                        visible={isModalOpen}
-                        setVisible={setIsModalOpen}
-                        setFieldValue={setFieldValue}
+                        isModalOpen={isModalOpen}
+                        handleModalClose={handleModalClose}
                         {...uploadModalProps}
                       />
                       {errors && errors.data?.attachment && touched && touched.data?.attachment ? (
@@ -215,7 +218,7 @@ const AssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
                     color="primary"
                     className="hover:text-white"
                     type="submit"
-                    disabled={!(isValid && dirty) || isSubmitting}
+                    disabled={(!(isValid && dirty) && !isNewFiles) || isSubmitting}
                   >
                     <div className="flex items-center">
                       {isSubmitting ? (
@@ -237,6 +240,15 @@ const AssetsWorkForm = ({ mode, setAction, setTabIndex }) => {
           )
         }}
       </Formik>
+      <UploadSummaryModal
+        visible={isUploadSummaryModalOpen}
+        setVisible={setIsUploadSummaryModalOpen}
+        successfulUploads={uploadSummary.successfulUploads}
+        failedUploads={uploadSummary.failedUploads}
+        uploadFiles={uploadFiles}
+        onRetryUpload={handleRetryUpload}
+        onOK={handleOK}
+      />
     </div>
   )
 }

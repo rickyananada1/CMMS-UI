@@ -116,7 +116,7 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
 console.log(user, 'selector');
   const visiblePopUp = useSelector((state) => state.woTracking?.visiblePopUp)
 
-  const [errorMessage, setErrorMessage] = useState('')
+  const [errorMessagePage, setErrorMessage] = useState('')
   const [data, setData] = useState({})
   const [isLoading, setIsLoading] = useState(true)
   const [disableEdit, setDisableEdit] = useState(false)
@@ -124,10 +124,11 @@ console.log(user, 'selector');
   const [isAssetChanged, setIsAssetChanged] = useState(false)
   const [isLocationDisabled, setIsLocationDisabled] = useState(false)
   const [isLocationFirst, setIsLocationFirst] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [dataFile, setDataFile] = useState([])
   const [isDrawerOpen, setDrawerOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
 
   const handleOpenDrawer = () => {
     setDrawerOpen(true)
@@ -271,30 +272,43 @@ const getUserSites = useGetUserSites({ site });
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const [files, setFiles] = useState([])
+
+  const formId = useMemo(() => selectedRow?.work_order_id, [selectedRow])
 
   const {
-    files,
-    errorMessage: messageError,
-    onDrop,
-    removeFiles,
+    errorMessage,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
+  const [isNewFiles, setIsNewFiles] = useState(false)
+  const [messageSuccess, setMessageSuccess] = useState('')
+
+  useEffect(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    setIsNewFiles(hasNewFiles || hasDeletedFiles)
+
+    const message =
+      hasNewFiles || hasDeletedFiles
+        ? '& attachment document saved successfully'
+        : 'saved successfully'
+    setMessageSuccess(message)
+  }, [files, deletedFiles])
 
   useEffect(() => {
     setFormDeletedFiles(deletedFiles)
@@ -500,10 +514,9 @@ const getUserSites = useGetUserSites({ site });
           is_location_first: values?.is_location_first,
         }
 
+        let woId
+        let fileUploadUrl
         try {
-          let woId
-          let fileUploadUrl
-
           if (mode === 'Create') {
             const response = await createWorkOrder.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.work_order_id
@@ -528,27 +541,24 @@ const getUserSites = useGetUserSites({ site });
 
           // Handle file operations
           if (mode === 'Update' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
           // Upload files with the correct URL
           if (files?.length > 0 && woId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Work Order saved successfully',
+            text: `Work Order ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -566,6 +576,27 @@ const getUserSites = useGetUserSites({ site });
         }
       }
     })
+  }
+
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/asset/${selectedRow?.asset_id}/attachment` // Assuming assetId is available
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId) // Pass formId if needed
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(0)
+    setAction('Read')
   }
 
   const deleteWorkOrderService = useDeleteWorkOrder()
@@ -760,13 +791,6 @@ const getUserSites = useGetUserSites({ site });
     },
   })
 
-  const { handleDownload: downloadFile } = useFileUpload({
-    fieldName: 'files',
-    uploadUrl: '',
-    fetchUrl: `/work-orders/${selectedRow?.work_order_id}/attachment`,
-    mode,
-  })
-
   useEffect(() => {
     if (mode !== 'Create') {
       getDetailFile.refetch()
@@ -782,37 +806,54 @@ const getUserSites = useGetUserSites({ site });
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
-      messageError,
-      onDrop,
+      setFiles,
+      errorMessage,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
-      messageError,
-      onDrop,
-      removeFiles,
+      setFiles,
+      errorMessage,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
 
   return {
     data,
     isLoading,
-    errorMessage,
+    errorMessagePage,
     formValue,
     selectedRow,
     setSelectedRow,
     handleSubmit,
-    downloadFile,
     getWorkTypes,
     getWorkPriorities,
     getWorkClassifications,
@@ -849,6 +890,14 @@ const getUserSites = useGetUserSites({ site });
     selectedFile,
     setSelectedFile,
     handleOpenDrawer,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 

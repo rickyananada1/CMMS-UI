@@ -15,6 +15,8 @@ import useAssetsRelationForm from './hooks/useAssetsRelationForm'
 import { Select, SelectPagination } from 'src/components/elements/select'
 import { relationSchema } from './schema'
 import UploadFileModal from 'src/views/pages/upload-file/components/UploadFileModal'
+import InputFile from 'src/components/elements/input/InputFile'
+import UploadSummaryModal from 'src/views/pages/upload-file/components/UploadSummaryModal'
 
 const AssetsRelationForm = ({ mode, setAction, setTabIndex }) => {
   const {
@@ -26,7 +28,16 @@ const AssetsRelationForm = ({ mode, setAction, setTabIndex }) => {
     getLocationDropdown,
     isModalOpen,
     setIsModalOpen,
+    handleModalClose,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   } = useAssetsRelationForm(mode, setAction, setTabIndex)
   return (
     <div className="w-full p-4 bg-white border border-gray-200 rounded-b-lg">
@@ -243,19 +254,11 @@ const AssetsRelationForm = ({ mode, setAction, setTabIndex }) => {
                             <CFormLabel className="text-primary fw-semibold w-100">
                               Attachments
                             </CFormLabel>
-                            <CButton
-                              color="primary"
-                              className="hover:text-white"
-                              type="button"
-                              onClick={() => setIsModalOpen(true)}
-                            >
-                              Upload File
-                            </CButton>
+                            <InputFile setIsModalOpen={setIsModalOpen} files={files} />
                           </div>
                           <UploadFileModal
-                            visible={isModalOpen}
-                            setVisible={setIsModalOpen}
-                            setFieldValue={setFieldValue}
+                            isModalOpen={isModalOpen}
+                            handleModalClose={handleModalClose}
                             {...uploadModalProps}
                           />
                           {errors &&
@@ -306,7 +309,7 @@ const AssetsRelationForm = ({ mode, setAction, setTabIndex }) => {
                       color="primary"
                       className="hover:text-white"
                       type="submit"
-                      disabled={isSubmitting || !(dirty && isValid)}
+                      disabled={isSubmitting || (!(dirty && isValid) && !isNewFiles)}
                     >
                       <div className="flex valuess-center justify-center">
                         {isSubmitting ? (
@@ -327,6 +330,15 @@ const AssetsRelationForm = ({ mode, setAction, setTabIndex }) => {
           )
         }}
       </Formik>
+      <UploadSummaryModal
+        visible={isUploadSummaryModalOpen}
+        setVisible={setIsUploadSummaryModalOpen}
+        successfulUploads={uploadSummary.successfulUploads}
+        failedUploads={uploadSummary.failedUploads}
+        uploadFiles={uploadFiles}
+        onRetryUpload={handleRetryUpload}
+        onOK={handleOK}
+      />
     </div>
   )
 }

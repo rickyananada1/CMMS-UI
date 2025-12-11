@@ -15,6 +15,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux'
 import { locationsActions } from '../../../slices/locationsSlices'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
+import { useGetFileUploaded } from 'src/views/pages/upload-file/services/getFileUploaded'
 
 const useFormLocation = ({ mode, setAction, setTabIndex }) => {
   const dispatch = useDispatch()
@@ -23,6 +24,17 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
   const userSite = {
     site_id: useSelector((state) => state.auth?.user?.site_id),
     site: useSelector((state) => state.auth?.user?.site),
+  }
+
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [dataFile, setDataFile] = useState([])
+  const [isDrawerOpen, setDrawerOpen] = useState(false)
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
+
+  const handleOpenDrawer = () => {
+    setDrawerOpen(true)
+    setSelectedFile(null)
   }
 
   const Notification = withReactContent(Swal)
@@ -44,28 +56,27 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const [files, setFiles] = useState([])
+
+  const formId = useMemo(() => selectedRow?.location_id, [selectedRow])
 
   const {
-    files,
     errorMessage,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
 
@@ -73,7 +84,6 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
     setFormDeletedFiles(deletedFiles)
   }, [deletedFiles])
 
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [formValue, setFormValue] = useState({
     location: {
       site_id:
@@ -109,13 +119,6 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
       hazard_group_description: '',
       rotating_item: null,
       rotating_item_description: null,
-      /*
-      hazard_group: {
-        label: '',
-        value: '',
-        description: '',
-      },
-      */
     },
     location_associates_parent: [],
     location_associates_children: [],
@@ -154,13 +157,25 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
       enabled: false,
     },
   })
+  const getDetailFile = useGetFileUploaded({
+    url: `/location/${selectedRow?.location_id}/attachment`,
+    config: {
+      enabled: false,
+    },
+  })
 
   useEffect(() => {
     if (mode !== 'Create') {
       getLocationService.refetch()
+      getDetailFile.refetch()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, mode])
+
+  useEffect(() => {
+    if (mode === 'Create') return
+    setDataFile(getDetailFile.data?.data?.data)
+  }, [getDetailFile.data, mode])
 
   useEffect(() => {
     if (mode === 'Create') return
@@ -283,10 +298,6 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
                 hazard_group_description: values?.location?.hazard_group_description,
                 rotating_item: values?.location?.rotating_item,
                 rotating_item_description: values?.location?.rotating_item_description,
-                /*
-                hazard_group: values?.location?.hazard_group?.hazard?.hazard_code,
-                hazard_group_description: values?.location?.hazard_group?.hazard?.hazard_desc,
-                */
               },
             }
 
@@ -353,10 +364,6 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
                 hazard_group_description: values?.location?.hazard_group_description,
                 rotating_item: values?.location?.rotating_item,
                 rotating_item_description: values?.location?.rotating_item_description,
-                /*
-                hazard_group: values?.location?.hazard_group?.hazard?.hazard_code,
-                hazard_group_description: values?.location?.hazard_group?.hazard?.hazard_desc,
-                */
               },
             }
 
@@ -378,26 +385,23 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
           }
 
           if (mode === 'Update' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
           if (files?.length > 0 && locationId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Location saved successfully',
+            text: `Location "${values?.location?.location}" ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -417,29 +421,79 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
     })
   }
 
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/location/${selectedRow?.location_id}/attachment`
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId)
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(0)
+    setAction('Read')
+  }
+
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
+      setFiles,
       errorMessage,
-      onDrop,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
+      setFiles,
       errorMessage,
-      onDrop,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
+  )
+
+  const isNewFiles = useMemo(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    return hasNewFiles || hasDeletedFiles
+  }, [files, deletedFiles])
+
+  const messageSuccess = useMemo(
+    () => (isNewFiles ? '& attachment document saved successfully' : 'saved successfully'),
+    [isNewFiles],
   )
 
   return {
@@ -467,6 +521,20 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
+    dataFile,
+    isDrawerOpen,
+    setDrawerOpen,
+    selectedFile,
+    setSelectedFile,
+    handleOpenDrawer,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 

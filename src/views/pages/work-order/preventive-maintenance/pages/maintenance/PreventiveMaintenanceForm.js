@@ -7,6 +7,8 @@ import { preventiveMaintenanceSchema } from './schema'
 import UsePreventiveMaintenanceForm from './Hooks/usePreventiveMaintenanceForm'
 import { DetailCard } from 'src/components/elements/cards'
 import UploadFileModal from 'src/views/pages/upload-file/components/UploadFileModal'
+import InputFile from 'src/components/elements/input/InputFile'
+import UploadSummaryModal from 'src/views/pages/upload-file/components/UploadSummaryModal'
 
 const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
   const {
@@ -19,6 +21,14 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
     getJobPlanDropdown,
     statusWorkType,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   } = UsePreventiveMaintenanceForm({ mode, setAction, setTabIndex })
 
   return (
@@ -65,7 +75,7 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                   <div className="row">
                     <div className="mb-4 col-md-3">
                       <CFormLabel className="text-primary fw-semibold">
-                        Preventive Maintenance
+                        Preventive Maintenance <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="preventive_maintenance_name"
@@ -88,7 +98,7 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                     </div>
                     <div className="mb-4 col-md-3">
                       <CFormLabel className="text-primary fw-semibold">
-                        Preventive Maintenance Description
+                        Preventive Maintenance Description <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="preventive_maintenance_description"
@@ -110,7 +120,9 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                       ) : null}
                     </div>
                     <div className="mb-4 col-md-3">
-                      <CFormLabel className="text-primary fw-semibold">Location</CFormLabel>
+                      <CFormLabel className="text-primary fw-semibold">
+                        Location <span className="text-red-main">*</span>
+                      </CFormLabel>
                       <Field
                         name="location_id"
                         placeholder="Choose Location"
@@ -156,7 +168,9 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                       ) : null}
                     </div>
                     <div className="mb-4 col-md-3">
-                      <CFormLabel className="text-primary fw-semibold">Asset</CFormLabel>
+                      <CFormLabel className="text-primary fw-semibold">
+                        Asset <span className="text-red-main">*</span>
+                      </CFormLabel>
                       <Field
                         name="asset_id"
                         placeholder="Choose Asset"
@@ -205,19 +219,13 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                         <CFormLabel className="text-primary fw-semibold w-100">
                           Attachments
                         </CFormLabel>
-                        <CButton
-                          color="primary"
-                          className="hover:text-white"
-                          type="button"
-                          onClick={() => setIsModalOpen(true)}
-                        >
-                          Upload File
-                        </CButton>
+                        <InputFile setIsModalOpen={setIsModalOpen} files={files} />
                       </div>
                       <UploadFileModal
                         visible={isModalOpen}
                         setVisible={setIsModalOpen}
                         setFieldValue={setFieldValue}
+                        uploadFiles={uploadFiles}
                         {...uploadModalProps}
                       />
                       {errors && errors.data?.attachment && touched && touched.data?.attachment ? (
@@ -236,7 +244,9 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                 <div className="my-2">
                   <div className="row">
                     <div className="mb-4 col-md-3">
-                      <CFormLabel className="text-primary fw-semibold">Job Plan</CFormLabel>
+                      <CFormLabel className="text-primary fw-semibold">
+                        Job Plan <span className="text-red-main">*</span>
+                      </CFormLabel>
                       <Field
                         name="job_plan_id"
                         placeholder="Choose Job Plan"
@@ -283,7 +293,9 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                       ) : null}
                     </div>
                     <div className="mb-4 col-md-3">
-                      <CFormLabel className="text-primary fw-semibold">Work Type</CFormLabel>
+                      <CFormLabel className="text-primary fw-semibold">
+                        Work Type <span className="text-red-main">*</span>
+                      </CFormLabel>
                       <Field
                         name="status"
                         placeholder="Choose Work Type"
@@ -393,7 +405,9 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                 <div className="my-2">
                   <div className="row">
                     <div className="mb-4 col-md-3">
-                      <CFormLabel className="text-primary fw-semibold">GL Account</CFormLabel>
+                      <CFormLabel className="text-primary fw-semibold">
+                        GL Account <span className="text-red-main">*</span>
+                      </CFormLabel>
                       <Field
                         name="gl_account"
                         placeholder="Choose GL Account"
@@ -410,7 +424,7 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                     </div>
                     <div className="mb-4 col-md-3">
                       <CFormLabel className="text-primary fw-semibold">
-                        GL Account Description
+                        GL Account Description <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="gl_account_desc"
@@ -427,7 +441,9 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                       ) : null}
                     </div>
                     <div className="mb-4 col-md-3">
-                      <CFormLabel className="text-primary fw-semibold">Storeroom Site</CFormLabel>
+                      <CFormLabel className="text-primary fw-semibold">
+                        Storeroom Site <span className="text-red-main">*</span>
+                      </CFormLabel>
                       <Field
                         name="storeroom_site"
                         placeholder="Enter Storeroom Site"
@@ -444,7 +460,7 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                     </div>
                     <div className="mb-4 col-md-3">
                       <CFormLabel className="text-primary fw-semibold">
-                        Storeroom Site Description
+                        Storeroom Site Description <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="storeroom_desc"
@@ -498,7 +514,7 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
                       color="primary"
                       className="hover:text-white"
                       type="submit"
-                      disabled={!(isValid && dirty) || isSubmitting}
+                      disabled={isSubmitting || (!(isValid && dirty) && !isNewFiles)}
                     >
                       <div className="flex items-center justify-center">
                         {isSubmitting ? (
@@ -519,6 +535,15 @@ const PreventiveMaintenanceForm = ({ mode, setAction, setTabIndex }) => {
           )
         }}
       </Formik>
+      <UploadSummaryModal
+        visible={isUploadSummaryModalOpen}
+        setVisible={setIsUploadSummaryModalOpen}
+        successfulUploads={uploadSummary.successfulUploads}
+        failedUploads={uploadSummary.failedUploads}
+        uploadFiles={uploadFiles}
+        onRetryUpload={handleRetryUpload}
+        onOK={handleOK}
+      />
     </div>
   )
 }

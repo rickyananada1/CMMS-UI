@@ -7,6 +7,8 @@ import { DetailCard } from 'src/components/elements/cards'
 import useJobPlan from '../hooks/useJobPlan'
 import { jobPlanSchema } from '../schema'
 import UploadFileModal from 'src/views/pages/upload-file/components/UploadFileModal'
+import InputFile from 'src/components/elements/input/InputFile'
+import UploadSummaryModal from 'src/views/pages/upload-file/components/UploadSummaryModal'
 
 const JobPlanForm = ({ mode, setAction, setTabIndex }) => {
   const {
@@ -17,7 +19,16 @@ const JobPlanForm = ({ mode, setAction, setTabIndex }) => {
     getSiteOrganizationDropdown,
     isModalOpen,
     setIsModalOpen,
+    handleModalClose,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   } = useJobPlan({
     mode,
     setAction,
@@ -169,19 +180,11 @@ const JobPlanForm = ({ mode, setAction, setTabIndex }) => {
                         <CFormLabel className="text-primary fw-semibold w-100">
                           Attachments
                         </CFormLabel>
-                        <CButton
-                          color="primary"
-                          className="hover:text-white"
-                          type="button"
-                          onClick={() => setIsModalOpen(true)}
-                        >
-                          Upload File
-                        </CButton>
+                        <InputFile setIsModalOpen={setIsModalOpen} files={files} />
                       </div>
                       <UploadFileModal
-                        visible={isModalOpen}
-                        setVisible={setIsModalOpen}
-                        setFieldValue={setFieldValue}
+                        isModalOpen={isModalOpen}
+                        handleModalClose={handleModalClose}
                         {...uploadModalProps}
                       />
                       {errors && errors.data?.attachment && touched && touched.data?.attachment ? (
@@ -207,7 +210,7 @@ const JobPlanForm = ({ mode, setAction, setTabIndex }) => {
                       color="primary"
                       className="hover:text-white"
                       type="submit"
-                      disabled={!(isValid && dirty) || isSubmitting}
+                      disabled={isSubmitting || (!(dirty && isValid) && !isNewFiles)}
                     >
                       <div className="flex items-center justify-center">
                         {isSubmitting ? (
@@ -228,6 +231,15 @@ const JobPlanForm = ({ mode, setAction, setTabIndex }) => {
           )
         }}
       </Formik>
+      <UploadSummaryModal
+        visible={isUploadSummaryModalOpen}
+        setVisible={setIsUploadSummaryModalOpen}
+        successfulUploads={uploadSummary.successfulUploads}
+        failedUploads={uploadSummary.failedUploads}
+        uploadFiles={uploadFiles}
+        onRetryUpload={handleRetryUpload}
+        onOK={handleOK}
+      />
     </div>
   )
 }

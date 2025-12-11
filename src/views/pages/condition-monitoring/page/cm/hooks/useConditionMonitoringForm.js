@@ -15,14 +15,27 @@ import { useLocation as useLocationRouter } from 'react-router-dom'
 import withReactContent from 'sweetalert2-react-content'
 import Swal from 'sweetalert2'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
+import { useGetFileUploaded } from 'src/views/pages/upload-file/services/getFileUploaded'
 
 const useConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
   const location = useLocationRouter()
   const Notification = withReactContent(Swal)
 
-  const fieldName = 'files'
   const auth = useSelector((state) => state.auth?.user)
   const selectedRow = useSelector((state) => state.conditionMonitoring?.selectedConditionMonitoring)
+
+  const [dataFile, setDataFile] = useState([])
+  const [isDrawerOpen, setDrawerOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
+
+  const handleOpenDrawer = () => {
+    setDrawerOpen(true)
+    setSelectedFile(null)
+  }
+
+  const fieldName = 'files'
   const { uploadUrl, fetchUrl } = useMemo(() => {
     if (mode === 'Update' && selectedRow?.condition_monitoring_id) {
       const cmId = selectedRow.condition_monitoring_id
@@ -38,28 +51,27 @@ const useConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const [files, setFiles] = useState([])
+
+  const formId = useMemo(() => selectedRow?.condition_monitoring_id, [selectedRow])
 
   const {
-    files,
     errorMessage,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
 
@@ -67,7 +79,6 @@ const useConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
     setFormDeletedFiles(deletedFiles)
   }, [deletedFiles])
 
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [historyCM, setHistoryCM] = useState([])
   const [formValue, setFormValue] = useState({
     data: {
@@ -126,12 +137,25 @@ const useConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
   const createConditionMonitoring = useCreateConditionMonitoring()
   const updateConditionMonitoring = useUpdateConditionMonitoring()
 
+  const getDetailFile = useGetFileUploaded({
+    url: `/asset/condition-monitoring/${selectedRow?.condition_monitoring_id}/attachment`,
+    config: {
+      enabled: false,
+    },
+  })
+
   useEffect(() => {
     if (mode !== 'Create') {
       getConditionMonitoring.refetch()
+      getDetailFile.refetch()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, mode])
+
+  useEffect(() => {
+    if (mode === 'Create') return
+    setDataFile(getDetailFile.data?.data?.data)
+  }, [getDetailFile.data, mode])
 
   useEffect(() => {
     if (mode !== 'Create') {
@@ -373,20 +397,17 @@ const useConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
 
           // --- Delete Files if any
           if (mode === 'Update' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
           // --- Upload Files with error catch
           if (files?.length > 0 && conditionMonitoringId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
@@ -394,7 +415,7 @@ const useConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Condition Monitoring saved successfully',
+            text: `Condition Monitoring "${values.data.condition_monitoring.point_num}" ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -414,32 +435,81 @@ const useConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
     })
   }
 
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/asset/condition-monitoring/${selectedRow?.condition_monitoring_id}/attachment`
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId)
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(0)
+    setAction('Read')
+  }
+
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
+      setFiles,
       errorMessage,
-      onDrop,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
+      setFiles,
       errorMessage,
-      onDrop,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
 
   const isDisabled = historyCM?.length > 0
+  const isNewFiles = useMemo(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    return hasNewFiles || hasDeletedFiles
+  }, [files, deletedFiles])
+
+  const messageSuccess = useMemo(
+    () => (isNewFiles ? '& attachment document saved successfully' : 'saved successfully'),
+    [isNewFiles],
+  )
 
   return {
     formValue,
@@ -459,6 +529,20 @@ const useConditionMonitoringForm = ({ mode, setAction, setTabIndex }) => {
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
+    dataFile,
+    isDrawerOpen,
+    setDrawerOpen,
+    selectedFile,
+    setSelectedFile,
+    handleOpenDrawer,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 

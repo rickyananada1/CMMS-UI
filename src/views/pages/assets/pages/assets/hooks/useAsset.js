@@ -123,28 +123,27 @@ const useAsset = ({ mode, setAction, setTabIndex }) => {
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  const [files, setFiles] = useState([])
+
+  const formId = useMemo(() => selectedRow?.asset_id, [selectedRow])
 
   const {
-    files,
     errorMessage,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
 
@@ -152,7 +151,8 @@ const useAsset = ({ mode, setAction, setTabIndex }) => {
     setFormDeletedFiles(deletedFiles)
   }, [deletedFiles])
 
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
   const [formValue, setFormValue] = useState({
     asset_id: '',
     asset_num: '',
@@ -429,60 +429,47 @@ const useAsset = ({ mode, setAction, setTabIndex }) => {
       confirmButtonColor: '#2671D9',
     }).then(async (result) => {
       if (result.isConfirmed) {
+        let assetId
+        let fileUploadUrl
+
         try {
-          let assetId
-          let fileUploadUrl
-
           if (mode === 'Create') {
-            const response = await createAsset.mutateAsync({
-              data: newValues,
-            })
-
+            const response = await createAsset.mutateAsync({ data: newValues })
             assetId = response?.data?.data?.asset_id
-
             if (!assetId) {
               throw new Error('Asset ID not returned')
             }
-
             fileUploadUrl = `/asset/${assetId}/attachment`
           } else {
             const response = await updateAsset.mutateAsync({
               id: selectedRow?.asset_id,
               data: newValues,
             })
-
             assetId = selectedRow?.asset_id
-
             if (!response || !assetId) {
               throw new Error('Update failed or missing ID')
             }
-
             fileUploadUrl = uploadUrl
           }
 
-          // --- Delete Files if any
           if (mode === 'Update' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
-          // --- Upload Files with error catch
           if (files?.length > 0 && assetId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Asset saved successfully',
+            text: `Asset "${values.asset_num}" ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -544,28 +531,79 @@ const useAsset = ({ mode, setAction, setTabIndex }) => {
     })
   }
 
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/asset/${selectedRow?.asset_id}/attachment` // Assuming assetId is available
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId) // Pass formId if needed
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setSelectedRow(null)
+    setTabIndex(0)
+    setAction('Read')
+  }
+
+  const isNewFiles = useMemo(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    return hasNewFiles || hasDeletedFiles
+  }, [files, deletedFiles])
+
+  const messageSuccess = useMemo(
+    () => (isNewFiles ? '& attachment document saved successfully' : 'saved successfully'),
+    [isNewFiles],
+  )
+
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
+      setFiles,
       errorMessage,
-      onDrop,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
+      setFiles,
       errorMessage,
-      onDrop,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
 
@@ -603,6 +641,14 @@ const useAsset = ({ mode, setAction, setTabIndex }) => {
     selectedFile,
     setSelectedFile,
     handleOpenDrawer,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 

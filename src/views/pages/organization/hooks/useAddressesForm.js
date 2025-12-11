@@ -38,28 +38,30 @@ const useAddressesForm = (mode, setAction, setTabIndex) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, addressId, orgId])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
+  const [files, setFiles] = useState([])
+
+  const formId = useMemo(
+    () => selectedOrganizationAddresss?.organization_id,
+    [selectedOrganizationAddresss],
   )
 
   const {
-    files,
     errorMessage: messageError,
-    onDrop,
-    removeFiles,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    setDeletedFiles,
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
 
@@ -67,7 +69,10 @@ const useAddressesForm = (mode, setAction, setTabIndex) => {
     setFormDeletedFiles(deletedFiles)
   }, [deletedFiles])
 
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isNewFiles, setIsNewFiles] = useState(false)
+  const [messageSuccess, setMessageSuccess] = useState('')
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
   const [errorMessage, setErrorMessage] = useState('')
   const [provinceData, setProvinceData] = useState([])
   const [cityData, setCityData] = useState([])
@@ -195,26 +200,23 @@ const useAddressesForm = (mode, setAction, setTabIndex) => {
           }
 
           if (mode === 'UpdateAddress' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
           if (files?.length > 0 && orgId && addressId) {
-            try {
-              await uploadFiles(files, fileUploadUrl)
-            } catch (err) {
-              // Handle Nginx 413 or general upload error
-              const status = err?.response?.status
-              if (status === 413) {
-                throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-              }
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
+              return
             }
           }
 
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Organization Address saved successfully',
+            text: `Organization Address ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -318,30 +320,81 @@ const useAddressesForm = (mode, setAction, setTabIndex) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/administration/organizations/${orgId}/addresses/${addressId}/attachments`
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId)
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(2)
+    setAction('Read')
+  }
+
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
+      setFiles,
       messageError,
-      onDrop,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
       handleDownload,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
     [
       files,
+      setFiles,
       messageError,
-      onDrop,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
       mode,
+      uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
     ],
   )
+
+  useEffect(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    setIsNewFiles(hasNewFiles || hasDeletedFiles)
+
+    const message =
+      hasNewFiles || hasDeletedFiles
+        ? '& attachment document saved successfully'
+        : 'saved successfully'
+    setMessageSuccess(message)
+  }, [files, deletedFiles])
 
   return {
     errorMessage,
@@ -361,6 +414,14 @@ const useAddressesForm = (mode, setAction, setTabIndex) => {
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
+    uploadFiles,
+    files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
+    isNewFiles,
   }
 }
 
