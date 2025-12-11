@@ -53,6 +53,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
     handleRetryUpload,
     uploadSummary,
     uploadModalProps,
+    isNewFiles,
   } = useServiceReq({
     mode,
     setAction,
@@ -587,7 +588,6 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                       <CFormLabel className="text-primary fw-semibold">
                         Reported By
                       </CFormLabel>
-                      {console.log(values, 'valuesreportedby')}
                       <Field
                         name="reportedby"
                         placeholder={values?.reportedby?.label || "Select Reported"}
@@ -672,7 +672,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                     Cancel
                   </CButton>
                   <CButton
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (!dirty && !isNewFiles)}
                     color="primary"
                     className="hover:text-white"
                     type="submit"
