@@ -80,8 +80,8 @@ const QuickReportingTab = React.lazy(() =>
 const WOServiceReqTab = React.lazy(() =>
   import('./views/pages/work-order/service-request/WOServiceReqTab'),
 )
-const ECPTab = React.lazy(() =>
-  import('./views/pages/work-order/engineering-change-proposal/ECPTab'),
+const ECPTicektTab = React.lazy(() =>
+  import('./views/pages/work-order/engineering-change-proposal/ECPTicektTab'),
 )
 
 // Failure Code Tab
@@ -163,11 +163,11 @@ const routes = [
     element: WOServiceReqTab,
   },
   {
-    path: '/work-order/engineering-change-proposal',
+    path: '/work-order/ticket-ecp',
     exact: true,
     parent: 'Work Order',
     name: 'Service Request',
-    element: ECPTab,
+    element: ECPTicektTab,
   },
   {
     path: '/work-order/service-request',

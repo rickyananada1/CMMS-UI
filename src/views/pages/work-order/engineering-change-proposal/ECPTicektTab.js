@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import ServiceRequestIndex from '../service-request/pages/service-request/ServiceRequestIndex'
 import { breadcrumbActions } from 'src/store/actions'
 
-const ECPTab = () => {
+const ECPTicektTab = () => {
   const dispatch = useDispatch()
   const serviceRequestState = useSelector((state) => state.serviceRequest)
 
@@ -21,7 +21,7 @@ const ECPTab = () => {
       element: <ServiceRequestList />,
     },
     {
-      title: 'Service Request',
+      title: 'Engineering Change Proposal',
       // element: <ServiceRequestIndex />,
       disabled: !serviceRequestState?.selectedServiceRequest,
       element: (
@@ -31,6 +31,20 @@ const ECPTab = () => {
           setTabIndex={(param) => dispatch(serviceRequestActions.setSelectedAppIndex(param))}
           setVisible={(param) => dispatch(serviceRequestActions.setVisiblePopUp(param))}
         />
+      ),
+    },
+    {
+      title: 'Failure Analysis',
+ disabled: !serviceRequestState?.selectedServiceRequest,
+      element: (
+     ` <div>adsa</div>>`
+      ),
+    },
+    {
+      title: 'Failure Defense Task',
+ disabled: !serviceRequestState?.selectedServiceRequest,
+      element: (
+        ` <div>hahaha</div>>`
       ),
     },
   ]
@@ -134,4 +148,4 @@ const ECPTab = () => {
   )
 }
 
-export default ECPTab
+export default ECPTicektTab
