@@ -1,10 +1,7 @@
-/* eslint-disable */
-/* prettier-ignore-start */
 import { useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { woTrackingActions } from '../../../slices/woTrackingSlices'
 import { useDebounce } from 'src/hooks/useDebounce'
-
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 import { downloadFileContentDisposition } from 'src/utils/helper'
@@ -30,10 +27,6 @@ const useList = () => {
   const searchDebounce = useDebounce(search, 400)
   const handleSearch = (event) => {
     setSearch(event.target.value)
-    const value = e.target.value;
-
-    console.log("SEARCH INPUT:", value)
-    console.log("DEBOUNCED:", searchDebounce)
   }
 
   const setSelectedRow = (param) => {

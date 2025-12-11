@@ -1,12 +1,6 @@
-/* eslint-disable */
-/* prettier-ignore-start */
-
 import React, { Fragment } from 'react'
-// import useServiceRequestIndex from './'
 import ServiceRequestDetails from './ServiceRequestDetail'
 import ServiceRequestForm from './ServiceRequestForm'
-import ServiceGrid from './ServiceGrid'
-import PreviewFile from './DetailFailureAnalysis'
 
 const QuickServiceRequestIndex = ({ mode, setAction, setTabIndex, setVisible }) => {
   return (
@@ -27,8 +21,6 @@ const QuickServiceRequestIndex = ({ mode, setAction, setTabIndex, setVisible }) 
           setVisible={setVisible}
         />
       )}
-      {/* <ServiceGrid />
-      <PreviewFile /> */}
     </Fragment>
   )
 }

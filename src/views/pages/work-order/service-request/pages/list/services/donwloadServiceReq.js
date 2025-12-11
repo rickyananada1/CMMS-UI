@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import axios from 'src/libs/axios'
 
 const downloadServiceReq = async ({ data, signal }) => {
-  return await axios.post(`/quick-reporting/download`, data, { signal })
+  return await axios.post(`/servicerequests/download`, data, { signal })
 }
 
 const useDownloadServiceReq = ({ data, config }) => {

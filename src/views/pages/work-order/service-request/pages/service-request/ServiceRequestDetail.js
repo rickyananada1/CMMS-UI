@@ -2,13 +2,10 @@
 /* prettier-ignore-start */
 
 import React from 'react'
-import CheckTag from 'src/assets/icons/check-tag.svg'
-import XTag from 'src/assets/icons/x-tag.svg'
-import { useSelector } from "react-redux";
 import { DetailCard } from 'src/components/elements/cards'
-import { CContainer, CCol, CRow, CFormTextarea } from '@coreui/react'
-import moment from 'moment'
+import { CContainer, CCol, CRow } from '@coreui/react'
 import useServiceReq from '../service-request/hooks/useServiceReq'
+import TableServiceReqDetail from './TableServiceReqDetail'
 import useTimeFormatter from 'src/hooks/useTimeFormatter'
 import CardHeader from 'src/components/elements/cards/CardHeader'
 import { FaPaperclip } from 'react-icons/fa'
@@ -30,10 +27,10 @@ const ServiceRequestDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
     setTabIndex,
     setVisible,
   })
-  const { formatDate, formatDuration } = useTimeFormatter()
+  const { formatDate } = useTimeFormatter()
   return (
     <>
-      <DetailCard>
+      <DetailCard isLoading={isLoading}>
         <CardHeader
           description={data?.description}
           infoFields={[
@@ -218,6 +215,8 @@ const ServiceRequestDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
           </CRow>
         </CContainer>
       </DetailCard>
+
+      <TableServiceReqDetail />
 
       <AttachmentDrawer
         isOpen={isDrawerOpen}

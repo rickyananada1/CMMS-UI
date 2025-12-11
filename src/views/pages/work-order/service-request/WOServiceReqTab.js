@@ -13,46 +13,6 @@ import { breadcrumbActions } from 'src/store/actions'
 const WOServiceReqTab = () => {
   const dispatch = useDispatch()
   const serviceRequestState = useSelector((state) => state.serviceRequest)
-  console.log("MODE:", serviceRequestState.selectedAppAction)
-  console.log("SELECTED SR:", serviceRequestState.selectedServiceRequest)
-  console.log(serviceRequestState, 'serviceRequestState');
-  console.log("SERVICE REQUEST STATE:", serviceRequestState);
-  const permissions = useSelector((state) => state.auth.permissions)
-  console.log('DEBUG permissions:', permissions)
-  const handleSimpleCreate = () => {
-    console.log("✅ SIMPLE CREATE CLICKED!");
-    console.log("Before:", {
-      index: serviceRequestState.selectedAppIndex,
-      action: serviceRequestState.selectedAppAction
-    });
-
-    dispatch(
-      serviceRequestActions.setSelectedAppIndexAndAction({
-        index: 1,
-        action: 'Create',
-      }),
-    );
-
-    // Check after
-    setTimeout(() => {
-      console.log("After:", {
-        index: serviceRequestState.selectedAppIndex,
-        action: serviceRequestState.selectedAppAction
-      });
-    }, 100);
-  };
-
-  const openNewServiceRequest = () => {
-    console.log("🎯 Opening New Service Request");
-    dispatch(
-      serviceRequestActions.setSelectedAppIndexAndAction({
-        index: 1,
-        action: 'Create',
-      }),
-    );
-  };
-
-  const [activeTab, setActiveTab] = useState(0);
 
   const tabsContent = [
     {
@@ -131,18 +91,6 @@ const WOServiceReqTab = () => {
     },
   ]
 
-  const simpleChooseActionMenu = [
-    {
-      group: 'TEST',
-      menu: [
-        {
-          title: 'SIMPLE NEW SR',
-          action: handleSimpleCreate, // Pakai fungsi yang sama
-        },
-      ],
-    },
-  ];
-
   useEffect(() => {
     dispatch(
       breadcrumbActions.setBreadcrumbItem({
@@ -157,68 +105,32 @@ const WOServiceReqTab = () => {
   }, [serviceRequestState.selectedAppIndex])
 
   // Cleanup function to dispatch reset action when component is unmounted
-  // useEffect(() => {
-  //   return () => {
-  //     dispatch(serviceRequestActions.resetState())
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [])
+  useEffect(() => {
+    return () => {
+      dispatch(serviceRequestActions.resetState())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
 
   return (
-    <div>
-      <button
-        onClick={handleSimpleCreate}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          padding: '15px',
-          backgroundColor: 'red',
-          color: 'white',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          zIndex: 99999
-        }}
-      >
-        🔴 TEST BUTTON (LUAR MENU)
-      </button>
-
-      {/* SIMPLE DEBUG INFO */}
-      {/* <div style={{
-        position: 'fixed',
-        top: '20px',
-        left: '20px',
-        background: 'transparant',
-        color: 'white',
-        padding: '15px',
-        zIndex: 99999,
-        border: '3px solid yellow'
-      }}>
-        <h3>DEBUG INFO</h3>
-        <p>Tab Index: {serviceRequestState.selectedAppIndex}</p>
-        <p>Action: {serviceRequestState.selectedAppAction}</p>
-        <p>Has SR: {serviceRequestState.selectedServiceRequest ? 'YES' : 'NO'}</p>
-      </div> */}
-
-      <TabsWrapper
-        defaultIndex={serviceRequestState.selectedAppIndex}
-        selectedIndex={serviceRequestState.selectedAppIndex}
-        content={tabsContent}
-        chooseActionMenu={chooseActionMenu}
-        actionMenuCallback={(action) => {
-          action()
-        }}
-        onSelect={(tabIndex) => {
-          dispatch(
-            serviceRequestActions.setSelectedAppIndexAndAction({
-              index: tabIndex,
-              action: 'Read',
-            }),
-          )
-        }}
-      />
-    </div>
+    <TabsWrapper
+      defaultIndex={serviceRequestState.selectedAppIndex}
+      selectedIndex={serviceRequestState.selectedAppIndex}
+      content={tabsContent}
+      chooseActionMenu={chooseActionMenu}
+      actionMenuCallback={(action) => {
+        action()
+      }}
+      onSelect={(tabIndex) => {
+        dispatch(
+          serviceRequestActions.setSelectedAppIndexAndAction({
+            index: tabIndex,
+            action: 'Read',
+          }),
+        )
+      }}
+    />
   )
 }
 

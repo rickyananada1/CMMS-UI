@@ -20,28 +20,17 @@ const useList = () => {
   const downloadServiceReqService = useDownloadServiceReq({})
   const [search, setSearch] = useState('')
   const searchDebounce = useDebounce(search, 400)
-  const handleSearch = (event) => {
-    console.log(event, 'evvvve');
-    setSearch(event.target.value)
-    const value = e.target.value;
-    console.log("SEARCH INPUT:", value)
-
-  }
-
+  const handleSearch = ({ target: { value } }) => {
+    setSearch(value);
+  };
   const setSelectedRow = (param) => {
-    // console.log('CLICKED param:', row);
-    // const ticketid = row?.ticketid
     dispatch(serviceRequestActions.setSelectedServiceReq(param))
     dispatch(serviceRequestActions.setSelectedAppIndex(1))
   }
 
   const resetSelectedTaskEtc = () => {
-    // dispatch(serviceRequestActions.setSelectedTask(null))
+    dispatch(serviceRequestActions.resetTabs())
     // dispatch(serviceRequestActions.resetState())
-    // dispatch(serviceRequestAction.setSelectedMaterial(null))
-    // dispatch(serviceRequestAction.setSelectedTool(null))
-    // dispatch(serviceRequestAction.setSelectedFailure(null))
-    // dispatch(serviceRequestAction.setSelectedDetailTab(0))
   }
 
   const downloadServiceReq = async () => {
@@ -62,6 +51,8 @@ const useList = () => {
           'display_name',
           'assetnum',
           'asset_description',
+          'location',
+          'location_description',
         ]
 
         await downloadServiceReqService
@@ -75,7 +66,7 @@ const useList = () => {
               data: res?.data,
               fileName: 'service_request.csv',
             })
-
+            console.log(res, 'resss');
             Notification.fire({
               icon: 'success',
               title: 'Success!',

@@ -111,9 +111,7 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
     ticketid: useSelector((state) => state.auth?.user?.site),
     // description: useSelector((state) => state.auth?.user?.description),
   }
-  console.log(userService, 'userServiceuserService');
-  const user = useSelector((state) => state.auth);
-console.log(user, 'selector');
+  const user = useSelector((state) => state.auth)
   const visiblePopUp = useSelector((state) => state.woTracking?.visiblePopUp)
 
   const [errorMessagePage, setErrorMessage] = useState('')
@@ -147,9 +145,9 @@ console.log(user, 'selector');
     site_id:
       userSite?.site_id !== null
         ? {
-          value: userSite?.site_id,
-          label: userSite?.site,
-        }
+            value: userSite?.site_id,
+            label: userSite?.site,
+          }
         : null,
     failure_code: null,
     classification: null,
@@ -179,15 +177,8 @@ console.log(user, 'selector');
     job_plan_id: null,
     pm_id: null,
 
-  // ticketid: data?.data?.uuid
-  // ? {
-  //     value: data.data.uuid,
-  //     label: data.data.ticketid,
-  //     description: data.data.description,
-  //   }
-  // : null,
-  ticketid: null,
-  summary: null,
+    ticketid: null,
+    summary: null,
   })
   const [oldStatus, setOldStatus] = useState('')
 
@@ -223,14 +214,12 @@ console.log(user, 'selector');
   const getLocations = useGetListLocation()
   const getAssets = useGetAssets()
   const getSites = useGetSites({ org_id: userOrgId })
-  console.log(getSites, 'userOrgId');
   const getFailureCodes = useGetFailureCodes()
   const getHazardGroup = useGetHazardGroup()
   const getWorkOrders = useGetWorkOrders()
-const site = useSelector((state) => state.auth?.user?.site);
+  const site = useSelector((state) => state.auth?.user?.site)
 
-const getUserSites = useGetUserSites({ site });
-  console.log(getUserSites, 'getUserSitesgetUserSitesgetUserSites');
+  const getUserSites = useGetUserSites({ site })
   const getJobPlanList = useGetJobPlanDropdown()
   const getPMList = useGetPreventiveMaintenanceDropdown()
 
@@ -349,9 +338,9 @@ const getUserSites = useGetUserSites({ site });
       }),
       ...(data?.uuid && {
         ticketid: {
-          value: data.uuid,          
-          label: data.ticketid,      
-          description: data.description
+          value: data.uuid,
+          label: data.ticketid,
+          description: data.description,
         },
       }),
       ...(data?.failure_code !== null && {

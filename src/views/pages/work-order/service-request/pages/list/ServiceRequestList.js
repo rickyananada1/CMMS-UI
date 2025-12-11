@@ -8,16 +8,7 @@ import { MdOutlineCloudDownload } from 'react-icons/md'
 import { useGetServiceRequest } from './services/getServiceRequest'
 import { CiFilter } from 'react-icons/ci'
 import clsx from 'clsx'
-import moment from 'moment'
-import { serviceRequestActions } from '../../slices/serviceRequestSlice'
-import { useSelector, useDispatch } from 'react-redux'
-import { getWoServiceRequests, useGetServiceRequestDetail } from 'src/views/pages/work-order/service-request/pages/service-request/services/serviceReqReuirement'
-import { getWoServiceRequest } from '../service-request/services/getServiceReq'
 
-
-
-// import DeleteConfirmation from 'src/components/elements/DeleteConfirmation/DeleteConfirmation'
-// import { useDeleteWorkOrder } from '../reporting/pages/quick-reporting-details/services'
 const STATUS_STYLES = {
   NEW: {
     label: "NEW",
@@ -94,6 +85,7 @@ const columns = [
             "rounded-full text-center font-semibold self-center px-3 py-1 border",
             status.class
           )}
+          style={{ width: `${row.column.getSize()}px` }}
         >
           {status.label}
         </div>
@@ -139,8 +131,26 @@ const columns = [
       <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
     ),
   },
+  {
+    header: 'Location',
+    accessorKey: 'location',
+    qName: 'qLocation',
+    size: 250,
+    cell: (row) => (
+      <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
+    ),
+  },
+  {
+    header: 'Location Description',
+    accessorKey: 'location_description',
+    qName: 'qLocationDescription',
+    size: 250,
+    cell: (row) => (
+      <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
+    ),
+  },
 ]
-const ServiceRequestList = ({ mode, setAction }) => {
+const ServiceRequestList = () => {
   const {
     selectedRow,
     setSelectedRow,
@@ -181,10 +191,10 @@ const ServiceRequestList = ({ mode, setAction }) => {
               />
               <GoSearch color="blue" />
             </div>
-            <button className="flex items-center border rounded border-solid px-3 py-2 text-sm">
+            {/* <button className="flex items-center border rounded border-solid px-3 py-2 text-sm">
               <CiFilter className="mr-2" color="blue" />
               Filter
-            </button>
+            </button> */}
           </div>
           <button
             className={`flex items-center cursor-pointer text-body-bold text-primary-main`}
@@ -204,36 +214,10 @@ const ServiceRequestList = ({ mode, setAction }) => {
           selectableRowSelected={(row) =>
             row.original?.ticketid === selectedRow?.ticketid
           }
-          // onRowClicked={(row) => {
-          //     console.log('row.original:', row.original)
-          //   setSelectedRow(row.original)
-          //   resetSelectedTaskEtc()
-          // }}
-
-          // onRowClicked={async (row) => {
-          //   const ticketid = row.original?.ticketid
-          //   resetSelectedTaskEtc()
-
-          //   if (!ticketid) return
-
-          //   getWoServiceRequest({ id: ticketid })
-          //     .then((res) => dispatch(serviceRequestActions.setselectedServiceReq(res.data.data)))
-          //     .catch((err) => console.error(err))
-          // }}
 
           onRowClicked={async (row) => {
-            // const ticketid = row.original?.ticketid
-            // if (!ticketid) return
             setSelectedRow(row.original)
             resetSelectedTaskEtc()
-            // try {
-            //   const res = await getWoServiceRequest({ id: ticketid })
-            //   dispatch(
-            //     serviceRequestActions.setSelectedServiceReq(res.data.data)
-            //   )
-            // } catch (err) {
-            //   console.error(err)
-            // }
           }}
 
 

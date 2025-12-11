@@ -95,10 +95,12 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const [isAssetChanged, setIsAssetChanged] = useState(false)
   const [isLocationDisabled, setIsLocationDisabled] = useState(false)
   const [isLocationFirst, setIsLocationFirst] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  // const [isModalOpen, setIsModalOpen] = useState(false)
   const [dataFile, setDataFile] = useState([])
   const [isDrawerOpen, setDrawerOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
+  const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
 
   const handleOpenDrawer = () => {
     setDrawerOpen(true)
@@ -186,9 +188,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setVisible])
 
-  // const getWorkTypes = useGetServiceReqTypes()
-  // const getWorkPriorities = useGetWorkPriorities()
-  // const getWorkClassifications = useGetWorkClassifications()
   const getLocations = useGetListLocation()
   const getAssets = useGetAssets()
   const getUserSite = useGetUserSites({ siteid: siteid })
@@ -198,15 +197,8 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   }
   const getUserLogin = useGetServiceReqs()
   const getReportBy = useGetReportBy()
-  // const getConfig = useConfigurationDropdown()
-  // const getUsers = useGetUser()
-  // console.log(getUsers, 'getUsers')
   const getSites = useGetSites({ org_id: userOrgId })
-  // const getFailureCodes = useGetFailureCodes()
-  // const getHazardGroup = useGetHazardGroup()
   const getWorkOrders = useGetServiceReqs()
-  // const getJobPlanList = useGetJobPlanDropdown()
-  // const getPMList = useGetPreventiveMaintenanceDropdown()
 
   const getServReq = async (params) => {
     setIsLoading(true)
@@ -233,6 +225,8 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const fieldName = 'files'
   const { uploadUrl, fetchUrl } = useMemo(() => {
+    console.log("selectedRow:", selectedRow)
+    console.log("UUID:", selectedRow?.uuid)
     if (mode === 'Update' && selectedRow?.uuid) {
       const woId = selectedRow.uuid
       return {
@@ -247,18 +241,21 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     }
   }, [mode, selectedRow])
 
-  const fileUploadProps = useMemo(
-    () => ({
-      fieldName,
-      uploadUrl,
-      fetchUrl,
-      mode,
-    }),
-    [fieldName, uploadUrl, fetchUrl, mode],
-  )
+  // const fileUploadProps = useMemo(
+  //   () => ({
+  //     fieldName,
+  //     uploadUrl,
+  //     fetchUrl,
+  //     mode,
+  //   }),
+  //   [fieldName, uploadUrl, fetchUrl, mode],
+  // )
+
+  const [files, setFiles] = useState([])
+  const formId = useMemo(() => selectedRow?.uuid, [selectedRow])
+  console.log(formId, 'ticketidticketid');
 
   const {
-    files,
     errorMessage: messageError,
     onDrop,
     removeFiles,
@@ -266,11 +263,33 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
+    setDeletedFiles,
     deletePendingFiles,
     deletedFiles,
-  } = useFileUpload(fileUploadProps)
+    tempFiles,
+    setTempFiles,
+    isModalOpen,
+    setIsModalOpen,
+    handleModalClose,
+    handleFileSelect,
+    duplicateFileError,
+  } = useFileUpload({uploadUrl, fetchUrl, mode, files, setFiles, formId})
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
+  const [isNewFiles, setIsNewFiles] = useState(false)
+  const [messageSuccess, setMessageSuccess] = useState('')
+
+  useEffect(() => {
+    const hasNewFiles = files?.some((item) => item instanceof File)
+    const hasDeletedFiles = deletedFiles?.length > 0
+    setIsNewFiles(hasNewFiles || hasDeletedFiles)
+
+    const message =
+      hasNewFiles || hasDeletedFiles
+        ? '& attachment document saved successfully'
+        : 'saved successfully'
+    setMessageSuccess(message)
+  }, [files, deletedFiles])
 
   useEffect(() => {
     setFormDeletedFiles(deletedFiles)
@@ -347,25 +366,25 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       service_request_attachment_url: data?.service_request_attachment_url,
 
       scheduled_start: data?.scheduled_start
-        ? moment(data?.scheduled_start).format('YYYY-MM-DD')
+        ? moment(data?.scheduled_start).format('YYYY-MM-DDTHH:mm')
         : null,
       targetstart: data?.targetstart
-        ? moment(data?.targetstart).format('YYYY-MM-DD')
+        ? moment(data?.targetstart).format('YYYY-MM-DDTHH:mm')
         : null,
       targetfinish: data?.targetfinish
-        ? moment(data?.targetfinish).format('YYYY-MM-DD')
+        ? moment(data?.targetfinish).format('YYYY-MM-DDTHH:mm')
         : null,
       actualstart: data?.actualstart
-        ? moment(data?.actualstart).format('YYYY-MM-DD')
+        ? moment(data?.actualstart).format('YYYY-MM-DDTHH:mm')
         : null,
       actualfinish: data?.actualfinish
-        ? moment(data?.actualfinish).format('YYYY-MM-DD')
+        ? moment(data?.actualfinish).format('YYYY-MM-DDTHH:mm')
         : null,
       reporteddate: data?.reporteddate
-        ? moment(data?.reporteddate).format('YYYY-MM-DD')
-        : null,
+        ? moment(data?.reporteddate).format('YYYY-MM-DDTHH:mm')
+        : moment().format("YYYY-MM-DDTHH:mm"),
       affecteddate: data?.affecteddate
-        ? moment(data?.affecteddate).format('YYYY-MM-DD')
+        ? moment(data?.affecteddate).format('YYYY-MM-DDTHH:mm')
         : null,
     }))
 
@@ -476,10 +495,9 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
         console.log("Submit payload:", modifiedFormData);
 
+        let woId
+        let fileUploadUrl
         try {
-          let woId
-          let fileUploadUrl
-
           if (mode === 'Create') {
             const response = await createServiceRequest.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.uuid
@@ -531,7 +549,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
           // Handle file operations
           if (mode === 'Update' && deletedFiles?.length > 0) {
-            await deletePendingFiles()
+            await deletePendingFiles(deletedFiles)
           }
 
           // Upload files with the correct URL
@@ -548,34 +566,12 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           //   }
           // }
           if (files?.length > 0 && woId) {
-            // Filter file yang terlalu besar (misal > 20MB)
-            const MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024
-            const validFiles = files.filter(file => {
-              if (!file.size) return false; // skip jika size undefined/null
-              const size = typeof file.size === 'string' ? Number(file.size) : file.size;
-              return size <= MAX_FILE_SIZE;
-            });
-            if (validFiles.length === 0) {
-              Notification.fire({
-                icon: 'error',
-                title: 'Upload Failed',
-                text: `All selected files exceed the maximum size of ${MAX_FILE_SIZE / (1024 * 1024 * 1024)} GB`,
-              })
+            const uploadResult = await uploadFiles(files, fileUploadUrl)
+            setUploadSummary(uploadResult)
+
+            if (uploadResult.failedUploads.length > 0) {
+              setIsUploadSummaryModalOpen(true)
               return
-            }
-
-            try {
-              await uploadFiles(validFiles, fileUploadUrl)
-            } catch (err) {
-              const status = err?.response?.status
-
-              if (status === 413) {
-                throw new Error(
-                  'Upload failed: File size exceeds server limit (Nginx). Please upload smaller files.'
-                )
-              }
-
-              throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
             }
           }
 
@@ -583,7 +579,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: 'Work Order saved successfully',
+            text: `Service Request ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -603,11 +599,30 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     })
   }
 
+  const handleRetryUpload = async (fileToRetry) => {
+    const fileUploadUrl = `/servicerequests/${selectedRow?.uuid}/attachment` // Assuming assetId is available
+
+    setUploadSummary((prevSummary) => ({
+      ...prevSummary,
+      failedUploads: prevSummary.failedUploads.filter((item) => item.file !== fileToRetry),
+    }))
+
+    const result = await uploadFiles([fileToRetry], fileUploadUrl, formId) // Pass formId if needed
+
+    setUploadSummary((prevSummary) => ({
+      successfulUploads: [...prevSummary.successfulUploads, ...result.successfulUploads],
+      failedUploads: [...prevSummary.failedUploads, ...result.failedUploads],
+    }))
+  }
+
+  const handleOK = () => {
+    setTabIndex(0)
+    setAction('Read')
+  }
+
   const deleteServiceRequest = useDeleteServiceRequest()
 
   const validateEditDelete = async (type = 'edit') => {
-    console.log('DEBUG validateEditDelete selectedRow:', selectedRow)
-    console.log('DEBUG validateEditDelete status:', selectedRow?.status, 'reportedby:', selectedRow?.reportedby)
     const notifTitle = `Unable to ${type} Service Request`
     return new Promise((resolve) => {
       if (!selectedRow) {
@@ -681,7 +696,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           await Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: `${selectedRow.uuid} deleted successfully`,
+            text: `${selectedRow.ticketid} deleted successfully`,
           })
 
           setSelectedRow(null)
@@ -822,11 +837,21 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       files: files || [],
       messageError,
       onDrop,
+      setFiles,
       mode,
       removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
+      setDeletedFiles,
+      uploadFiles,
+      tempFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       isSubmitting: false,
       isError: false,
     }),
@@ -837,7 +862,17 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
+      setFiles,
       handleDownload,
+      setDeletedFiles,
+      tempFiles,
+      uploadFiles,
+      setTempFiles,
+      isModalOpen,
+      setIsModalOpen,
+      handleModalClose,
+      handleFileSelect,
+      duplicateFileError,
       mode,
     ],
   )
@@ -859,6 +894,11 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     getUserSite,
     getReportBy,
     getUserLogin,
+    isUploadSummaryModalOpen,
+    uploadSummary,
+    setIsUploadSummaryModalOpen,
+    handleRetryUpload,
+    handleOK,
     // getUsers,
     getSites,
     // getConfig,
@@ -885,12 +925,16 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
+    isModalOpen,
+    uploadFiles,
+    setIsModalOpen,
     dataFile,
     isDrawerOpen,
     setDrawerOpen,
     selectedFile,
     setSelectedFile,
     handleOpenDrawer,
+    isNewFiles,
   }
 }
 
