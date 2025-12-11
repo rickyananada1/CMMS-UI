@@ -76,7 +76,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const siteid = useSelector((state) => state.auth?.user?.site)
   const reportedOrg = useSelector((state) => state.auth?.user?.user_id)
   const oke = useSelector((state) => state.auth?.user?.site)
-  console.log(oke, 'sssssiteid');
   const repId = {
     user_id: useSelector((state) => state.auth?.user?.user_id),
     reportedby: useSelector((state) => state.auth?.user?.display_name),
@@ -210,7 +209,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       .then((res) => {
         if (res.status === 200) {
           setData(res.data.data)
-          console.log(res.data, 'resdata');
         }
       })
       .catch((err) => {
@@ -225,8 +223,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const fieldName = 'files'
   const { uploadUrl, fetchUrl } = useMemo(() => {
-    console.log("selectedRow:", selectedRow)
-    console.log("UUID:", selectedRow?.uuid)
     if (mode === 'Update' && selectedRow?.uuid) {
       const woId = selectedRow.uuid
       return {
@@ -253,7 +249,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const [files, setFiles] = useState([])
   const formId = useMemo(() => selectedRow?.uuid, [selectedRow])
-  console.log(formId, 'ticketidticketid');
 
   const {
     errorMessage: messageError,
@@ -301,7 +296,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     setOldStatus(data?.status)
     updateWorkOrderStatuses(data?.status)
     const row = data[0];
-    console.log("RAW DATA = ", getServiceRequestService.data?.data?.data);
     setFormValue((prev) => ({
       ...prev,
       ...(data?.location && {
@@ -405,9 +399,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const updateServiceReq = useUpdateServiceReq()
 
   const handleSubmit = async (values, formikHelpers) => {
-    console.log('reportedby:', values.reportedby)
-    console.log('affectedperson:', values.affectedperson)
-    console.log('affectedperson.user_id:', values.affectedperson?.user_id)
     Notification.fire({
       icon: 'info',
       text: 'Are you sure to submit ?',
@@ -501,21 +492,9 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           if (mode === 'Create') {
             const response = await createServiceRequest.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.uuid
-            const responseAssetnum = response?.data?.data?.assetnum
 
             if (!woId) {
               throw new Error('Service Request ID not returned')
-            }
-
-            if (responseAssetnum) {
-              console.log('✅ Asset Number (assetnum) tersimpan:', responseAssetnum)
-              console.log(`   yang dikirim: ${modifiedFormData.assetnum}`)
-              console.log(`   dari backend: ${responseAssetnum}`)
-            } else {
-              console.warn('⚠️ WARNING: Asset number tidak dikembalikan dari backend')
-              if (modifiedFormData.assetnum) {
-                console.warn(`   Expected: ${modifiedFormData.assetnum}`)
-              }
             }
 
             fileUploadUrl = `/servicerequests/${woId}/attachment`
@@ -526,24 +505,12 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
                 ticketid: selectedRow.uuid,
               }
             })
-            const responseAssetnum = updateRes?.data?.data?.assetnum
 
             woId = selectedRow?.uuid
             fileUploadUrl = uploadUrl // Use existing URL for update mode
 
             if (!updateRes || !woId) {
               throw new Error('Update failed or missing ID')
-            }
-
-            if (responseAssetnum) {
-              console.log('✅ Asset Number (assetnum) terupdate:', responseAssetnum)
-              console.log(`   yang dikirim: ${modifiedFormData.assetnum}`)
-              console.log(`   dari backend: ${responseAssetnum}`)
-            } else {
-              console.warn('⚠️ WARNING: Asset number tidak dikembalikan dari backend')
-              if (modifiedFormData.assetnum) {
-                console.warn(`   Expected: ${modifiedFormData.assetnum}`)
-              }
             }
           }
 
@@ -814,12 +781,12 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   //   getServiceRequestService.mutate(ticketId);
   // }, [ticketId]);
 
-  // useEffect(() => {
-  //   if (mode !== 'Create') {
-  //     getDetailFile.refetch()
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [location.pathname, mode])
+  useEffect(() => {
+    if (mode !== 'Create') {
+      getDetailFile.refetch()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, mode])
 
   useEffect(() => {
     if (mode !== 'Create' && selectedRow?.uuid) {
@@ -925,15 +892,14 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
-    isModalOpen,
     uploadFiles,
-    setIsModalOpen,
     dataFile,
     isDrawerOpen,
     setDrawerOpen,
     selectedFile,
     setSelectedFile,
     handleOpenDrawer,
+    files,
     isNewFiles,
   }
 }
