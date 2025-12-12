@@ -768,7 +768,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const { handleDownload: downloadFile } = useFileUpload({
     fieldName: 'files',
     uploadUrl: '',
-    fetchUrl: `/servicerequest/${selectedRow?.uuid}/attachment`,
+    fetchUrl: `/servicerequests/download`,
     mode,
   })
 
