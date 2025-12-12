@@ -268,7 +268,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     handleModalClose,
     handleFileSelect,
     duplicateFileError,
-  } = useFileUpload({uploadUrl, fetchUrl, mode, files, setFiles, formId})
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
   const [isNewFiles, setIsNewFiles] = useState(false)
@@ -542,7 +542,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             }
           }
 
-
           Notification.fire({
             icon: 'success',
             title: 'Success',
@@ -768,7 +767,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const { handleDownload: downloadFile } = useFileUpload({
     fieldName: 'files',
     uploadUrl: '',
-    fetchUrl: `/servicerequests/download`,
+    fetchUrl: `/servicerequest/${selectedRow?.uuid}/attachment`,
     mode,
   })
 
