@@ -45,11 +45,11 @@ const useList = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         const column_names = [
-          'ticketid',
-          'description',
-          'status',
-          'display_name',
-          'assetnum',
+          'service_request',
+          'summary',
+          'status_sr',
+          'reported_by',
+          'asset',
           'asset_description',
           'location',
           'location_description',

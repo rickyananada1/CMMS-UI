@@ -268,7 +268,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     handleModalClose,
     handleFileSelect,
     duplicateFileError,
-  } = useFileUpload({uploadUrl, fetchUrl, mode, files, setFiles, formId})
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
   const [isNewFiles, setIsNewFiles] = useState(false)
@@ -502,7 +502,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             const updateRes = await updateServiceReq.mutateAsync({
               data: {
                 ...modifiedFormData,
-                ticketid: selectedRow.uuid,
+                uuid: selectedRow.uuid,
               }
             })
 
@@ -541,7 +541,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
               return
             }
           }
-
 
           Notification.fire({
             icon: 'success',
