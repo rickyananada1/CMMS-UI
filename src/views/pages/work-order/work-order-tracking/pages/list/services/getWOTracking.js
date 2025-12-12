@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'src/libs/axios'
 
 const getWOTracking = async ({ params, signal }) => {
-  console.log(params, 'hahahah')
   return await axios.get('/work-orders', { params, signal })
 }
 

@@ -3,46 +3,45 @@
 
 import React, { useState, useEffect } from 'react'
 import { TabsWrapper } from 'src/components/elements/tabs'
-import ServiceRequestList from '../service-request/pages/list/ServiceRequestList'
-import { serviceRequestActions } from '../service-request/slices/serviceRequestSlice'
-
+import TicketEcpList from '../engineering-change-proposal/pages/list/TicketEcpList'
 import { useDispatch, useSelector } from 'react-redux'
-import ServiceRequestIndex from '../service-request/pages/service-request/ServiceRequestIndex'
+import TicketEcpIndex from '../engineering-change-proposal/pages/engineering-change-proposal/TicketEcpIndex'
 import { breadcrumbActions } from 'src/store/actions'
+import { ticketEcpActions } from './slices/ticketEcpSlice'
 
 const ECPTicektTab = () => {
   const dispatch = useDispatch()
-  const serviceRequestState = useSelector((state) => state.serviceRequest)
+  const ticketEcpState = useSelector((state) => state.ticketEcp)
 
   const tabsContent = [
     {
       title: 'List',
       // element: <ServiceRequestList  onGoToServiceRequest={() => setActiveTab(1)} />,
-      element: <ServiceRequestList />,
+      element: <TicketEcpList />,
     },
     {
       title: 'Engineering Change Proposal',
       // element: <ServiceRequestIndex />,
-      disabled: !serviceRequestState?.selectedServiceRequest,
+      disabled: !ticketEcpState?.selectedTicketEcp,
       element: (
-        <ServiceRequestIndex
-          mode={serviceRequestState?.selectedAppAction}
-          setAction={(param) => dispatch(serviceRequestActions.setSelectedAppAction(param))}
-          setTabIndex={(param) => dispatch(serviceRequestActions.setSelectedAppIndex(param))}
-          setVisible={(param) => dispatch(serviceRequestActions.setVisiblePopUp(param))}
+        <TicketEcpIndex
+          mode={ticketEcpState?.selectedAppAction}
+          setAction={(param) => dispatch(ticketEcpActions.setSelectedAppAction(param))}
+          setTabIndex={(param) => dispatch(ticketEcpActions.setSelectedAppIndex(param))}
+          setVisible={(param) => dispatch(ticketEcpActions.setVisiblePopUp(param))}
         />
       ),
     },
     {
       title: 'Failure Analysis',
- disabled: !serviceRequestState?.selectedServiceRequest,
+      disabled: !ticketEcpState?.selectedTicketEcp,
       element: (
-     ` <div>adsa</div>>`
+        ` <div>adsa</div>>`
       ),
     },
     {
       title: 'Failure Defense Task',
- disabled: !serviceRequestState?.selectedServiceRequest,
+      disabled: !ticketEcpState?.selectedTicketEcp,
       element: (
         ` <div>hahaha</div>>`
       ),
@@ -51,18 +50,18 @@ const ECPTicektTab = () => {
 
   const chooseActionMenu = [
     {
-      group: 'Service Request',
+      group: 'Engineering Change Proposal',
       menu: [
         {
-          title: 'New Service Request',
+          title: 'New Engineering Change Proposal',
           modul_name: 'Work Order',
           app_group: 'Work Order',
-          app_name: 'Service Request',
+          app_name: 'Engineering Change Proposal',
           app_action: 'Create',
           action: () => {
             console.log("CREATE CLICKED!")
             dispatch(
-              serviceRequestActions.setSelectedAppIndexAndAction({
+              ticketEcpActions.setSelectedAppIndexAndAction({
                 index: 1,
                 action: 'Create',
               }),
@@ -70,15 +69,15 @@ const ECPTicektTab = () => {
           },
         },
         {
-          title: 'Update/Edit Service Request',
+          title: 'Update/Edit Engineering Change Proposal',
           modul_name: 'Work Order',
           app_group: 'Work Order',
-          app_name: 'Service Request',
+          app_name: 'Engineering Change Proposal',
           app_action: 'Update',
-          disabled: !serviceRequestState?.selectedServiceRequest,
+          disabled: !ticketEcpState?.selectedTicketEcp,
           action: () => {
             dispatch(
-              serviceRequestActions.setSelectedAppIndexAndAction({
+              ticketEcpActions.setSelectedAppIndexAndAction({
                 index: 1,
                 action: 'Update',
               }),
@@ -86,15 +85,15 @@ const ECPTicektTab = () => {
           },
         },
         {
-          title: 'Delete Service Request',
+          title: 'Delete Engineering Change Proposal',
           modul_name: 'Work Order',
           app_group: 'Work Order',
-          app_name: 'Service Request',
+          app_name: 'Engineering Change Proposal',
           app_action: 'Delete',
-          disabled: !serviceRequestState?.selectedServiceRequest,
+          disabled: !ticketEcpState?.selectedTicketEcp,
           action: () => {
             dispatch(
-              serviceRequestActions.setSelectedAppIndexAndAction({
+              ticketEcpActions.setSelectedAppIndexAndAction({
                 index: 1,
                 action: 'Delete',
               }),
@@ -109,19 +108,19 @@ const ECPTicektTab = () => {
     dispatch(
       breadcrumbActions.setBreadcrumbItem({
         name:
-          serviceRequestState.selectedAppIndex !== 1
-            ? tabsContent[serviceRequestState.selectedAppIndex].title
+          ticketEcpState.selectedAppIndex !== 1
+            ? tabsContent[ticketEcpState.selectedAppIndex].title
             : 'Detail',
         index: 2,
       }),
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serviceRequestState.selectedAppIndex])
+  }, [ticketEcpState.selectedAppIndex])
 
   // Cleanup function to dispatch reset action when component is unmounted
   useEffect(() => {
     return () => {
-      dispatch(serviceRequestActions.resetState())
+      dispatch(ticketEcpActions.resetState())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -129,8 +128,8 @@ const ECPTicektTab = () => {
 
   return (
     <TabsWrapper
-      defaultIndex={serviceRequestState.selectedAppIndex}
-      selectedIndex={serviceRequestState.selectedAppIndex}
+      defaultIndex={ticketEcpState.selectedAppIndex}
+      selectedIndex={ticketEcpState.selectedAppIndex}
       content={tabsContent}
       chooseActionMenu={chooseActionMenu}
       actionMenuCallback={(action) => {
@@ -138,7 +137,7 @@ const ECPTicektTab = () => {
       }}
       onSelect={(tabIndex) => {
         dispatch(
-          serviceRequestActions.setSelectedAppIndexAndAction({
+          ticketEcpActions.setSelectedAppIndexAndAction({
             index: tabIndex,
             action: 'Read',
           }),
