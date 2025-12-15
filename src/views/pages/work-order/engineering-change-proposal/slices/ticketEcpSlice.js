@@ -29,12 +29,12 @@ export const ticketEcpSlice = createSlice({
     setVisiblePopUp(state, action) {
       state.visiblePopUp = action.payload
     },
-    selectedFailureAnalysisTab(state, action) {
-      state.selectedPlanTab = action.payload
-    },
-    selectedFailureDefTab(state, action) {
-      state.selectedActualTab = action.payload
-    },
+    // selectedFailureAnalysisTab(state, action) {
+    //   state.selectedPlanTab = action.payload
+    // },
+    // selectedFailureDefTab(state, action) {
+    //   state.selectedActualTab = action.payload
+    // },
     resetState() {
       return initialState
     },

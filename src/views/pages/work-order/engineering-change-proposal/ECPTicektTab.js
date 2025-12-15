@@ -13,6 +13,11 @@ const ECPTicektTab = () => {
   const dispatch = useDispatch()
   const ticketEcpState = useSelector((state) => state.ticketEcp)
 
+    {
+    console.log("SELECTED ECP:", ticketEcpState.selectedTicketEcp)
+    console.log("ID YANG DIPAKAI:", ticketEcpState.selectedTicketEcp?.ticketid)
+  }
+
   const tabsContent = [
     {
       title: 'List',

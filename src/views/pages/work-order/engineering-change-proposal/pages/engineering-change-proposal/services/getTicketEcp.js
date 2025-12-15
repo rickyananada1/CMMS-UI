@@ -14,4 +14,16 @@ const useGetTicketEcp = (props) => {
   })
 }
 
-export { getWoTicketEcp, useGetTicketEcp }
+
+const getTicketEcp = async ({ params, signal }) => {
+  return await axios.get('/ticketecp/', { params, signal })
+}
+
+const useGetTicketEcps = (props) => {
+  return useMutation({
+    mutationFn: getTicketEcp,
+    ...props?.config,
+  })
+}
+
+export { getWoTicketEcp, useGetTicketEcp, getTicketEcp, useGetTicketEcps }

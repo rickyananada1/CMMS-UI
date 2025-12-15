@@ -35,7 +35,7 @@ const useList = () => {
   }
 
   const resetSelectedTaskEtc = () => {
-    dispatch(ticketEcpActions.resetState(0))
+    // dispatch(ticketEcpActions.resetState(0))
     // dispatch(planTaskActions.resetState())
     // dispatch(actualsTaskActions.resetState())
     // dispatch(plansChildrenActions.resetState())

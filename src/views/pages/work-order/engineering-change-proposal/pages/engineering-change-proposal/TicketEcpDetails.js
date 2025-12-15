@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore-start */
-
+import { useSelector } from 'react-redux'
 import React from 'react'
 import { DetailCard } from 'src/components/elements/cards'
 import { CContainer, CCol, CRow } from '@coreui/react'
@@ -11,6 +11,11 @@ import { FaPaperclip } from 'react-icons/fa'
 import AttachmentDrawer from 'src/components/elements/drawer/AttachmentDrawer'
 
 const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
+   const selectedTicket = useSelector(state => state.ticketEcp.selectedTicketEcp)
+
+  console.log("🟦 SELECTED TICKET:", selectedTicket)
+  console.log("🟩 ID DI DETAIL:", selectedTicket?.ticketid)
+  console.log("🟩 MODE:", mode)
   const {
     data,
     isLoading,
@@ -27,6 +32,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
     setVisible,
   })
   const { formatDate } = useTimeFormatter()
+
   return (
     <>
       <DetailCard isLoading={isLoading}>
@@ -76,7 +82,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
               Detail Engineering Change Proposal
             </p>
           </div>
-          <CRow>
+          <CRow className="mb-3">
             <div rows={10}
               className="font-normal p-2 h-[300px] border rounded bg-white"
               dangerouslySetInnerHTML={{ __html: data?.detailsummary ?? '-' }}
@@ -110,7 +116,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
             </p>
             <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
           </div>
-          <CRow>
+          <CRow className="mb-3">
             <CCol>
               <label className="text-neutral-text-field">Reported By</label>
               <br />

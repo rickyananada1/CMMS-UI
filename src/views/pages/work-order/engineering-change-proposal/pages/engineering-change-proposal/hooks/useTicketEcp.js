@@ -8,6 +8,7 @@ import {
   useGetTicketEcp,
   useUpdateTicketEcp,
   useDeleteTicketEcp,
+  useGetTicketEcps,
   useGetFailureCodes,
   useGetSites,
   useGetAssets,
@@ -76,7 +77,7 @@ function generateTicketEcp() {
 const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   const Notification = withReactContent(Swal)
   const dispatch = useDispatch()
-  const selectedRow = useSelector((state) => state.woTracking?.selectedWorkOrder)
+  const selectedRow = useSelector((state) => state.ticketEcp?.selectedTicketEcp)
   const userOrgId = useSelector((state) => state.auth?.user?.organization_id)
   const userSite = {
     site_id: useSelector((state) => state.auth?.user?.site_id),
@@ -162,7 +163,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   }
 
   useEffect(() => {
-    mode !== 'Create' ? getWorkOrder() : setIsLoading(false)
+    mode !== 'Create' ? getTicketEcps() : setIsLoading(false)
     mode === 'Delete' && deleteWorkOrder()
     mode === 'Update' && validateEdit()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -187,18 +188,18 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   const getAssets = useGetAssets()
   const getSites = useGetSites({ org_id: userOrgId })
   // const getFailureCodes = useGetFailureCodes()
-  const getTicketEcp = useGetTicketEcp()
+  const getDatTicketEcp = useGetTicketEcps()
   const site = useSelector((state) => state.auth?.user?.site)
 
   const getUserSites = useGetUserSites({ site })
   const getJobPlanList = useGetJobPlanDropdown()
   const getPMList = useGetPreventiveMaintenanceDropdown()
 
-  const getWorkOrder = async (params) => {
+  const getTicketEcps = async (params) => {
     setIsLoading(true)
     await getTicketEcpService
       .mutateAsync({
-        id: selectedRow?.work_order_id,
+        id: selectedRow?.ticketid,
         params: params,
       })
       .then((res) => {
@@ -218,8 +219,8 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const fieldName = 'files'
   const { uploadUrl, fetchUrl } = useMemo(() => {
-    if (mode === 'Update' && selectedRow?.work_order_id) {
-      const woId = selectedRow.work_order_id
+    if (mode === 'Update' && selectedRow?.ticketid) {
+      const woId = selectedRow.ticketid
       return {
         uploadUrl: `/work-orders/${woId}/attachment`,
         fetchUrl: `/work-orders/${woId}/attachment`,
@@ -234,7 +235,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const [files, setFiles] = useState([])
 
-  const formId = useMemo(() => selectedRow?.work_order_id, [selectedRow])
+  const formId = useMemo(() => selectedRow?.ticketid, [selectedRow])
 
   const {
     errorMessage,
@@ -277,6 +278,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   useEffect(() => {
     if (!getTicketEcpService.data?.data?.data) return
     const data = getTicketEcpService.data.data.data
+    console.log(data, 'datadata');
     setOldStatus(data?.status)
     updateTicketEcpStatuses(data?.status)
     setFormValue((prev) => ({
@@ -307,9 +309,9 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
           label: data?.site,
         },
       }),
-      ...(data?.uuid && {
+      ...(data?.ticketid && {
         ticketid: {
-          value: data.uuid,
+          value: data.ticketid,
           label: data.ticketid,
           description: data.description,
         },
@@ -479,7 +481,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
         try {
           if (mode === 'Create') {
             const response = await createTicketEcp.mutateAsync({ data: modifiedFormData })
-            woId = response?.data?.data?.work_order_id
+            woId = response?.data?.data?.ticketid
 
             if (!woId) {
               throw new Error('Work Order ID not returned')
@@ -488,10 +490,10 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
             fileUploadUrl = `/work-orders/${woId}/attachment`
           } else {
             const updateRes = await updateTicketEcp.mutateAsync({
-              id: selectedRow?.work_order_id,
+              id: selectedRow?.ticketid,
               data: modifiedFormData,
             })
-            woId = selectedRow?.work_order_id
+            woId = selectedRow?.ticketid
             fileUploadUrl = uploadUrl // Use existing URL for update mode
 
             if (!updateRes || !woId) {
@@ -643,7 +645,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
       if (result.isConfirmed) {
         await deleteTicketEcpService
           .mutateAsync({
-            id: selectedRow.work_order_id,
+            id: selectedRow.ticketid,
           })
           .then((res) => {
             Notification.fire({
@@ -688,7 +690,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
 
         await updateTicketEcp
           .mutateAsync({
-            id: selectedRow.work_order_id,
+            id: selectedRow.ticketid,
             data: dataWithRemovedParent,
           })
           .then((res) => {
@@ -745,7 +747,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   }
 
   const getDetailFile = useGetFileUploaded({
-    url: `/work-orders/${selectedRow?.work_order_id}/attachment`,
+    url: `/work-orders/${selectedRow?.ticketid}/attachment`,
     config: {
       enabled: false,
     },
@@ -814,14 +816,9 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
     selectedRow,
     setSelectedRow,
     handleSubmit,
-    getWorkPriorities,
-    getWorkClassifications,
     getLocations,
     getAssets,
     getSites,
-    getFailureCodes,
-    getHazardGroup,
-    getTicketEcp,
     getUserSites,
     ticket_ecp_stauses,
     disableEdit,
@@ -838,6 +835,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
     setIsLocationFirst,
     isModalOpen,
     setIsModalOpen,
+    getDatTicketEcp,
     fieldName,
     uploadUrl,
     fetchUrl,
