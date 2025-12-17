@@ -79,7 +79,7 @@ const ServiceRequestDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
           </div>
           <CRow>
             <div rows={10}
-              className="font-normal p-2 h-[300px] border rounded bg-white"
+              className="font-normal p-2 h-[300px] border rounded bg-white overflow-auto"
               dangerouslySetInnerHTML={{ __html: data?.detailsummary ?? '-' }}
             />
           </CRow>
@@ -130,7 +130,7 @@ const ServiceRequestDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
             <CCol md={3}>
               <label className="text-neutral-text-field">Asset Site</label>
               <br />
-              <span className="font-semibold">{data?.siteid ?? '-'}</span>
+              <span className="font-semibold">{data?.site ?? '-'}</span>
             </CCol>
           </CRow>
           {/* <CRow className="mb-3">
