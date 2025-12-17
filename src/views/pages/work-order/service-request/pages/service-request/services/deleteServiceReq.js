@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import axios from 'src/libs/axios'
 
 const deleteServiceRequest = async ({ id, signal }) => {
-  return await axios.post('/delete-servicerequest',
+  return await axios.post('/servicerequest/delete-servicerequest',
     { id },
     { signal }
   )
