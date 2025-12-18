@@ -163,7 +163,7 @@ const routes = [
     element: WOServiceReqTab,
   },
   {
-    path: '/work-order/ticket-ecp',
+    path: '/work-order/engineering-change-proposal',
     exact: true,
     parent: 'Work Order',
     name: 'Service Request',
