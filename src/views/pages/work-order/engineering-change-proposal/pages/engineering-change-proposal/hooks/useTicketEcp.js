@@ -9,6 +9,7 @@ import {
   useUpdateTicketEcp,
   useDeleteTicketEcp,
   useGetTicketEcps,
+  useGetReportBy,
   useGetFailureCodes,
   useGetSites,
   useGetAssets,
@@ -24,8 +25,9 @@ import { useGetPreventiveMaintenanceDropdown } from 'src/views/pages/work-order/
 import { useGetFrequencySeasonalDetail } from 'src/views/pages/work-order/preventive-maintenance/pages/frequency-seasonal/services'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
 import { useGetFileUploaded } from 'src/views/pages/upload-file/services/getFileUploaded'
+import { organizationActions } from 'src/views/pages/organization/slices/organizationSlices'
 
-var ticket_ecp_stauses = [
+var ticket_ecp_statuses = [
   { value: 'NEW', label: 'NEW' },
   { value: 'WAPPR', label: 'WAPPR' },
   { value: 'APPR', label: 'APPR' },
@@ -56,8 +58,8 @@ function updateTicketEcpStatuses(currentStatus) {
     console.error(`Unknown service request status: ${currentStatus}`);
     return;
   }
-  ticket_ecp_stauses.length = 0;
-  ticket_ecp_stauses.push({ value: currentStatus, label: currentStatus });
+  ticket_ecp_statuses.length = 0;
+  ticket_ecp_statuses.push({ value: currentStatus, label: currentStatus });
 }
 
 function generateTicketEcp() {
@@ -87,6 +89,10 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
     ticketid: useSelector((state) => state.auth?.user?.site),
     // description: useSelector((state) => state.auth?.user?.description),
   }
+  const repId = {
+    user_id: useSelector((state) => state.auth?.user?.user_id),
+    reportedby: useSelector((state) => state.auth?.user?.display_name),
+  }
   const user = useSelector((state) => state.auth)
   const visiblePopUp = useSelector((state) => state.ticketEcp?.visiblePopUp)
 
@@ -113,11 +119,15 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   const location = useLocation()
 
   const [formValue, setFormValue] = useState({
-    work_order_code: generateTicketEcp(),
+    ticketid: generateTicketEcp(),
     description: null,
     location_id: null,
+    location: null,
+    location_description: null,
     asset_id: null,
-    parent_wo_id: null,
+    asset_id: null,
+    asset_num: null,
+    asset_description: null,
     site_id:
       userSite?.site_id !== null
         ? {
@@ -125,36 +135,20 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
           label: userSite?.site,
         }
         : null,
-    failure_code: null,
-    classification: null,
-    work_type: null,
-    work_priority: null,
     status: null,
-    hazard_id: null,
-
-    configuration_item_id: null,
-    configuration_item_description: null,
-    movement_type_id: null,
-    movement_type_description: null,
-    cost_center_id: null,
-    cost_center_description: null,
-    internal_order_id: null,
-    internal_order_description: null,
-    wbs_id: null,
-    wbs_description: null,
-    vendor_id: null,
-    vendor_description: null,
-    gl_account_id: null,
-
-    need_safety_approval: false,
-    is_task: false,
-    asset_up: false,
-
-    job_plan_id: null,
-    pm_id: null,
-
-    ticketid: null,
-    summary: null,
+    detailsummary: null,
+    reportedby:
+      repId?.user_id !== null
+        ? {
+          value: repId?.user_id,
+          label: repId?.reportedby,
+        }
+        : null,
+    display_name: null,
+    reporteddate: null,
+    phone_number: null,
+    email: null,
+    organization_id: null,
   })
   const [oldStatus, setOldStatus] = useState('')
 
@@ -190,7 +184,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   // const getFailureCodes = useGetFailureCodes()
   const getDatTicketEcp = useGetTicketEcps()
   const site = useSelector((state) => state.auth?.user?.site)
-
+  const getReportBy = useGetReportBy()
   const getUserSites = useGetUserSites({ site })
   const getJobPlanList = useGetJobPlanDropdown()
   const getPMList = useGetPreventiveMaintenanceDropdown()
@@ -199,7 +193,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
     setIsLoading(true)
     await getTicketEcpService
       .mutateAsync({
-        id: selectedRow?.ticketid,
+        id: selectedRow?.uuid,
         params: params,
       })
       .then((res) => {
@@ -219,8 +213,8 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const fieldName = 'files'
   const { uploadUrl, fetchUrl } = useMemo(() => {
-    if (mode === 'Update' && selectedRow?.ticketid) {
-      const woId = selectedRow.ticketid
+    if (mode === 'Update' && selectedRow?.uuid) {
+      const woId = selectedRow.uuid
       return {
         uploadUrl: `/work-orders/${woId}/attachment`,
         fetchUrl: `/work-orders/${woId}/attachment`,
@@ -235,7 +229,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const [files, setFiles] = useState([])
 
-  const formId = useMemo(() => selectedRow?.ticketid, [selectedRow])
+  const formId = useMemo(() => selectedRow?.uuid, [selectedRow])
 
   const {
     errorMessage,
@@ -278,131 +272,72 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   useEffect(() => {
     if (!getTicketEcpService.data?.data?.data) return
     const data = getTicketEcpService.data.data.data
-    console.log(data, 'datadata');
     setOldStatus(data?.status)
-    updateTicketEcpStatuses(data?.status)
+    // updateTicketEcpStatuses(data?.status)
+    if (data?.status) {
+      updateTicketEcpStatuses(data.status)
+    }
+    const row = data[0];
     setFormValue((prev) => ({
       ...prev,
-      ...(data?.location_id !== null && {
+      ...(data?.location && {
         location_id: {
-          value: data?.location_id,
-          label: data?.location,
-          location_description: data?.location_desc,
+          value: data.location_id ?? data.location,
+          label: `${data.location} - ${data.location_description ?? ''}`,
+          location: data.location,
+          location_description: data.location_description ?? '',
         },
       }),
       ...(data?.asset_id !== null && {
         asset_id: {
           value: data?.asset_id,
-          label: data?.asset_num,
-          asset_description: data?.asset_desc,
+          label: data?.assetnum,
+          asset_description: data?.asset_description,
+          site: data?.site,
         },
       }),
-      ...(data?.parent_wo_id !== null && {
-        parent_wo_id: {
-          value: data?.parent_wo_id,
-          label: data?.parent_wo,
+      // ...(data?.reportedby !== null && {
+      //   reportedby: {
+      //     value: data?.user_id,
+      //     label: data?.display_name,
+      //   },
+      // }),
+      // ...(data?.reportedby && {
+      //   reportedby: data?.reportedby || "",
+      // }),
+      ...(data?.reportedby !== null && {
+        reportedOrg: {
+          value: data?.reportedby,
+          label: data?.display_name,
+          site_code: data.reported
         },
       }),
-      ...(data?.site_id !== null && {
-        site_id: {
-          value: data?.site_id,
-          label: data?.site,
+      ...(data?.siteid && {
+        siteid: {
+          value: data.siteid,
+          label: data.siteid,
         },
       }),
-      ...(data?.ticketid && {
-        ticketid: {
-          value: data.ticketid,
-          label: data.ticketid,
-          description: data.description,
-        },
-      }),
-      ...(data?.failure_code !== null && {
-        failure_code: {
-          value: data?.failure_code,
-          label: data?.failure_code,
-        },
-      }),
-      ...(data?.classification !== null && {
-        classification: {
-          value: data?.classification,
-          label: data?.classification,
-        },
-      }),
-      ...(data?.work_type !== null && {
-        work_type: {
-          value: data?.work_type,
-          label: data?.work_type,
-        },
-      }),
-      ...(data?.work_priority !== null && {
-        work_priority: {
-          value: data?.work_priority,
-          label: data?.work_priority,
-        },
-      }),
+
       ...(data?.status !== null && {
         status: {
           value: data?.status,
           label: data?.status,
         },
       }),
-      ...(data?.hazard_id !== null && {
-        hazard_id: {
-          value: data?.hazard_id,
-          label: data?.hazard_code,
-          hazard: { hazard_desc: data?.hazard_desc },
-        },
-      }),
-      work_order_code: data?.work_order_code,
+      ticketid: data?.ticketid,
+      // affectedperson: data?.affectedperson,
       description: data?.description,
+      detailsummary: data?.detailsummary,
+      asset_description: data?.asset_description,
+      location_description: data?.location_description,
+      display_name: data?.display_name,
 
-      configuration_item_id: data?.configuration_item_id,
-      configuration_item_description: data?.configuration_item_description,
-      movement_type_id: data?.movement_type_id,
-      movement_type_description: data?.movement_type_description,
-      cost_center_id: data?.cost_center_id,
-      cost_center_description: data?.cost_center_description,
-      internal_order_id: data?.internal_order_id,
-      internal_order_description: data?.internal_order_description,
-      wbs_id: data?.wbs_id,
-      wbs_description: data?.wbs_description,
-      vendor_id: data?.vendor_id,
-      vendor_description: data?.vendor_description,
-      gl_account_id: data?.gl_account_id,
+      ticekt_ecp_attachment_url: data?.ticekt_ecp_attachment_url,
 
-      work_order_attachment_url: data?.work_order_attachment_url,
-      need_safety_approval: data?.need_safety_approval,
-      is_task: data?.is_task,
-      asset_up: data?.asset_up,
-
-      ...(data?.job_plan_id !== null && {
-        job_plan_id: {
-          value: data?.job_plan_id,
-          label: data?.plan_name,
-          plan_description: data?.plan_description,
-          fromPM: data?.preventive_maintenance_name !== null,
-        },
-      }),
-      ...(data?.pm_id !== null && {
-        pm_id: {
-          value: data?.pm_id,
-          label: data?.preventive_maintenance_name,
-          preventive_maintenance_description: data?.preventive_maintenance_description,
-        },
-      }),
-
-      scheduled_start: data?.scheduled_start
-        ? moment(data?.scheduled_start).format('YYYY-MM-DDTHH:mm')
-        : null,
-      scheduled_finish: data?.scheduled_finish
-        ? moment(data?.scheduled_finish).format('YYYY-MM-DDTHH:mm')
-        : null,
-      actual_start: data?.actual_start
-        ? moment(data?.actual_start).format('YYYY-MM-DDTHH:mm')
-        : null,
-      actual_finish: data?.actual_finish
-        ? moment(data?.actual_finish).format('YYYY-MM-DDTHH:mm')
-        : null,
+      reporteddate: data?.reporteddate
+        ? moment(data?.reporteddate).format('YYYY-MM-DDTHH:mm')
+        : moment().format("YYYY-MM-DDTHH:mm"),
     }))
 
     setIsLocationFirst(data?.is_location_first)
@@ -417,6 +352,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getTicketEcpService.data])
+
 
   const createTicketEcp = useCreateTicketEcp()
   const updateTicketEcp = useUpdateTicketEcp()
@@ -434,45 +370,32 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
       if (result.isConfirmed) {
         const modifiedFormData = {
           ...values,
-          location_id: values?.location_id?.value,
+          location_id: values?.location_id?.value ?? null,
+          location: values?.location_id?.location ?? null,
+          location_description: values?.location_id?.location_description ?? null,
           asset_id: values?.asset_id?.value ?? null,
-          parent_wo_id: values?.parent_wo_id?.value ?? null,
-          site_id: values?.site_id?.value,
-          classification: values?.classification?.value,
-          work_type: values?.work_type?.value,
-          work_priority: values?.work_priority?.value,
-          failure_code: values?.failure_code?.label,
-          status: values?.status?.value,
-          status_date:
-            values?.status?.value !== oldStatus ? moment().toISOString(true) : data.status_date,
-          hazard_id: values?.hazard_id?.value,
-          need_safety_approval: values?.need_safety_approval ?? false,
-          is_task: values?.is_task ?? false,
-          asset_up: values?.asset_up ?? false,
-          configuration_item_id: values?.configuration_item_id,
-          movement_type_id: values?.movement_type_id,
-          cost_center_id: values?.cost_center_id,
-          internal_order_id: values?.internal_order_id,
-          wbs_id: values?.wbs_id,
-          vendor_id: values?.vendor_id,
-          gl_account_id: values?.gl_account_id,
-          service_request_id: values?.ticketid?.value,
-          job_plan_id: values?.job_plan_id?.value,
-          pm_id: values?.pm_id?.value,
-
-          scheduled_start: values?.scheduled_start
-            ? moment(values?.scheduled_start).toISOString(true)
-            : null,
-          scheduled_finish: values?.scheduled_finish
-            ? moment(values?.scheduled_finish).toISOString(true)
-            : null,
-          actual_start: values?.actual_start
-            ? moment(values?.actual_start).toISOString(true)
-            : null,
-          actual_finish: values?.actual_finish
-            ? moment(values?.actual_finish).toISOString(true)
+          assetnum: values?.asset_id?.label ?? null,
+          asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
+          reportedby: values?.reportedby?.value
+            ? String(values.reportedby.value)
             : null,
 
+          phone_number: values?.phone_number || "",
+          email: values?.email || "",
+          siteid:
+            values?.site_id?.value
+              ? String(values.site_id.value)
+              : values?.asset_id?.site
+                ? String(values.asset_id.site)
+                : null,
+          description: values?.description || "",
+          status: values?.status?.value ?? null,
+          detailsummary: values?.detailsummary || "",
+          organization_id: values?.organization_id || "",
+          organization: values?.organization || "",
+          reportdate: values?.reportdate
+            ? moment(values.reportdate).format('YYYY-MM-DD')
+            : moment().format('YYYY-MM-DD'),
           is_location_first: values?.is_location_first,
         }
 
@@ -481,7 +404,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
         try {
           if (mode === 'Create') {
             const response = await createTicketEcp.mutateAsync({ data: modifiedFormData })
-            woId = response?.data?.data?.ticketid
+            woId = response?.data?.data?.uuid
 
             if (!woId) {
               throw new Error('Work Order ID not returned')
@@ -490,10 +413,10 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
             fileUploadUrl = `/work-orders/${woId}/attachment`
           } else {
             const updateRes = await updateTicketEcp.mutateAsync({
-              id: selectedRow?.ticketid,
+              id: selectedRow?.uuid,
               data: modifiedFormData,
             })
-            woId = selectedRow?.ticketid
+            woId = selectedRow?.uuid
             fileUploadUrl = uploadUrl // Use existing URL for update mode
 
             if (!updateRes || !woId) {
@@ -645,7 +568,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
       if (result.isConfirmed) {
         await deleteTicketEcpService
           .mutateAsync({
-            id: selectedRow.ticketid,
+            id: selectedRow.uuid,
           })
           .then((res) => {
             Notification.fire({
@@ -690,7 +613,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
 
         await updateTicketEcp
           .mutateAsync({
-            id: selectedRow.ticketid,
+            id: selectedRow.uuid,
             data: dataWithRemovedParent,
           })
           .then((res) => {
@@ -747,7 +670,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   }
 
   const getDetailFile = useGetFileUploaded({
-    url: `/work-orders/${selectedRow?.ticketid}/attachment`,
+    url: `/work-orders/${selectedRow?.uuid}/attachment`,
     config: {
       enabled: false,
     },
@@ -820,7 +743,8 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
     getAssets,
     getSites,
     getUserSites,
-    ticket_ecp_stauses,
+    ticket_ecp_statuses,
+    getReportBy,
     disableEdit,
     getJobPlanList,
     getPMList,

@@ -83,7 +83,7 @@ const useList = () => {
           .then((res) => {
             downloadFileContentDisposition({
               data: res?.data,
-              fileName: 'wo_tracking.csv',
+              fileName: 'ticket-ecp.csv',
             })
 
             Notification.fire({

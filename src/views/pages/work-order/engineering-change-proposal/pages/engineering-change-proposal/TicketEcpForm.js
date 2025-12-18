@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore-start */
-import React from 'react'
+import React, { useState }  from 'react'
 import {
   CContainer,
   CFormLabel,
@@ -33,7 +33,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
     getAssets,
     getUserSite,
     getReportBy,
-    work_order_statuses,
+    ticket_ecp_statuses,
     files,
     disableEdit,
     isLocationChanged,
@@ -78,61 +78,81 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
           values,
           touched,
         }) => {
-          const normalizeLocation = (item) => ({
-            value: item.location_id,
-            label: `${item.location} - ${item.location_description}`,
-            location: String(item.location),
-            location_description: item.location_description ?? '',
-            location_id: item.location_id,
+          const [filteredAssetOptions, setFilteredAssetOptions] = useState([])
+          const assetOptions = getAssets?.data?.data?.data || []
+          console.log(getAssets, 'getAssets');
+
+          const normalizeLocationFromAsset = (asset) => ({
+            value: asset.location_id ?? asset.location,
+            label: `${asset.location} - ${asset.location_description ?? ''}`,
+            location: String(asset.location),
+            location_description: asset.location_description ?? '',
+            location_id: asset.location_id ?? asset.location,
+            site: asset.site ?? asset.siteid,
+            siteid: asset.siteid,
           })
 
           const handleLocationChange = (val) => {
             if (!val) {
               setFieldValue('location_id', null)
+              setFieldValue('location_description', '')
+              setIsLocationChanged(false)
+              setIsLocationDisabled(false)
+
               setFieldValue('asset_id', null)
+              setFieldValue('asset_description', '')
+              setIsAssetChanged(false)
+              setFilteredAssetOptions([])
               return
             }
-            const formatted = normalizeLocation(val)
+
+            const formatted = normalizeLocationFromAsset(val)
             setFieldValue('location_id', formatted)
             setFieldValue('location_description', formatted.location_description)
             setIsLocationChanged(true)
+            const filteredAssets = assetOptions.filter(
+              (a) => a.location_id === formatted.location_id
+            )
+            setFilteredAssetOptions(filteredAssets)
 
-            if (!isAssetChanged) {
+            if (!isAssetChanged && filteredAssets.length > 0) {
+              const defaultAsset = filteredAssets[0]
+              setFieldValue('asset_id', defaultAsset)
+              setFieldValue('asset_description', defaultAsset.asset_description || '')
+              if (defaultAsset.site) setFieldValue('site_id', defaultAsset.site)
+              setIsAssetChanged(true)
+            } else if (!isAssetChanged) {
               setFieldValue('asset_id', null)
+              setFieldValue('asset_description', '')
             }
           }
 
           const handleAssetChange = (val) => {
-            setFieldValue('asset_id', val)
-
-            // SET asset_description AGAR MASUK KE FORMIK
-            setFieldValue('asset_description', val?.asset_description || '')
-
-            if (val?.site) {
-              setFieldValue('site_id', val.site)
-            }
-
             if (!val) {
+              setFieldValue('asset_id', null)
+              setFieldValue('asset_description', '')
               setFieldValue('site_id', '')
+              setIsAssetChanged(false)
+
               if (!isLocationChanged) {
                 setFieldValue('location_id', null)
                 setIsLocationDisabled(false)
               }
-              setIsAssetChanged(false)
               return
             }
 
+            setFieldValue('asset_id', val)
+            setFieldValue('asset_description', val.asset_description || '')
+
+            const site = val.site ?? val.siteid
+            if (site) setFieldValue('site_id', site)
+
             setIsAssetChanged(true)
 
-            if (!isLocationChanged && val?.location) {
-              const formatted = normalizeLocation(val)
+            if (!isLocationChanged && val.location) {
+              const formatted = normalizeLocationFromAsset(val)
               setFieldValue('location_id', formatted)
               setIsLocationDisabled(true)
-
-              if (isLocationFirst === null) {
-                setIsLocationFirst(false)
-                setFieldValue('is_location_first', false)
-              }
             }
           }
 
@@ -141,13 +161,13 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
               <DetailCard isLoading={isLoading}>
                 {mode === 'Update' ? (
                   <div>
-                    <h4 className="w-font-semibold">Update Service Request</h4>
-                    <p>Update Service Request Details</p>
+                    <h4 className="w-font-semibold">Update Engineering Change Proposal</h4>
+                    <p>Update Engineering Change Proposal</p>
                   </div>
                 ) : (
                   <div>
-                    <h4 className="w-font-semibold">New Service Request</h4>
-                    <p>Fill this column to add new service request</p>
+                    <h4 className="w-font-semibold">New Engineering Change Proposal</h4>
+                    <p>Fill this column to add new engineering change proposal</p>
                   </div>
                 )}
                 <CContainer fluid>
@@ -160,11 +180,11 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                   <CRow className="mb-3">
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Service Request <span className="text-red-main">*</span>
+                        ECP Number <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="ticketid"
-                        placeholder="Enter Service Request"
+                        placeholder="Enter ECP Number"
                         value={values?.ticketid}
                         invalid={touched.ticketid && errors.ticketid}
                         onChange={handleChange}
@@ -177,11 +197,11 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Summary Service Request <span className="text-red-main">*</span>
+                        Summary ECP <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="description"
-                        placeholder="Enter Summary Service Request"
+                        placeholder="Enter Summary ECP"
                         value={values?.description}
                         invalid={touched.description && errors.description}
                         onChange={handleChange}
@@ -194,11 +214,11 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Status SR
+                        Status ECP
                       </CFormLabel>
                       <Field
                         name="status"
-                        placeholder="Choose Status SR"
+                        placeholder="Choose Status ECP"
                         value={values?.status}
                         isAllData
                         hasNoKey
@@ -207,7 +227,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                         }}
                         size="md"
                         as={Select}
-                        options={work_order_statuses}
+                        options={ticket_ecp_statuses}
                         isLocalSearch
                       />
                     </CCol>
@@ -257,7 +277,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                   <CRow>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Detail Service Request <span className="text-red-main">*</span>
+                        Detail Engineering Change Proposal <span className="text-red-main">*</span>
                       </CFormLabel>
                       <div>
                         <Editor
@@ -266,7 +286,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                           valueKey="detailsummary"
                           labelKey="detailsummary"
                           otherKey={{
-                            plan_description: 'detailsummary',
+                            description: 'detailsummary',
                           }}
                           invalid={touched.detailsummary && errors.detailsummary}
                           onChange={(val) => setFieldValue('detailsummary', val)}
@@ -280,12 +300,6 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                       </div>
                     </CCol>
                   </CRow>
-                  <div className="flex items-center mt-2 justify-between -mx-2">
-                    <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
-                      Service Request Information
-                    </p>
-                    <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
-                  </div>
                   <CRow className="mb-3">
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
@@ -392,192 +406,6 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                     </CCol>
                   </CRow>
                   <CRow className="mb-3">
-                    {/* <CCol>
-                  <CFormLabel className="text-primary fw-semibold">
-                    Configuration <span className="text-red-main">*</span>
-                  </CFormLabel>
-                  <Field
-                    name="configuration_id"
-                    placeholder="(851) 080-9409"
-                    valueKey="configuration_id"
-                    labelKey="configuration_id" size="md"
-                    as={SelectPagination}
-                    isClearable
-                  />
-                </CCol>
-                <CCol>
-                  <CFormLabel className="text-primary fw-semibold">
-                    Configuration Description <span className="text-red-main">*</span>
-                  </CFormLabel>
-                  <Field
-                    name="configuration"
-                    placeholder="99" size="md"
-                    as={CFormInput}
-                    disabled
-                  />
-                </CCol> */}
-                    <CCol md={3}>
-                      <CFormLabel className="text-primary fw-semibold">
-                        GL Account
-                      </CFormLabel>
-                      <Field
-                        name="glaccount"
-                        placeholder="Enter GL Account"
-                        value={values?.glaccount}
-                        onChange={handleChange}
-                        size="md"
-                        as={CFormInput}
-                      />
-                    </CCol>
-                    <CCol md={3}>
-                      <CFormLabel className="text-primary fw-semibold">
-                        Asset Site <span className="text-red-main">*</span>
-                      </CFormLabel>
-                      <Field
-                        name="site_id"
-                        placeholder="Select Site"
-                        value={values?.asset_id?.site || ''}
-                        isAllData
-                        handleChange
-                        size="md"
-                        disabled
-                        as={CFormInput}
-                      />
-                    </CCol>
-                  </CRow>
-                  {/* <CRow className="mb-3">
-                <CCol md={3}>
-                  <CFormLabel className="text-primary fw-semibold">
-                    Classification <span className="text-red-main">*</span>
-                  </CFormLabel>
-                  <Field
-                    name="classification_id"
-                    placeholder="(981) 266-5326"
-                    valueKey="classification_id"
-                    labelKey="classification_id" size="md"
-                    as={SelectPagination}
-                    isClearable
-                  />
-                </CCol>
-                <CCol md={3}>
-                  <CFormLabel className="text-primary fw-semibold">
-                    Classification Description <span className="text-red-main">*</span>
-                  </CFormLabel>
-                  <Field
-                    name="classification_description"
-                    placeholder="85" size="md"
-                    as={CFormInput}
-                    disabled
-                  />
-                </CCol>
-              </CRow> */}
-                  <div className="flex items-center mt-2 justify-between -mx-2">
-                    <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
-                      Date
-                    </p>
-                    <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
-                  </div>
-                  <CRow className="mb-3">
-                    {/* <CCol md={3}>
-                    <CFormLabel className="text-primary fw-semibold">
-                      Target Contact
-                    </CFormLabel>
-                    <Field
-                      name="target_contact"
-                      placeholder="Choose Scheduled Start"
-                      size="md"
-                      min={moment().format('YYYY-MM-DD')}
-                      as={CFormInput}
-                      type="date"
-                    />
-                  </CCol> */}
-                    <CCol>
-                      <CFormLabel className="text-primary fw-semibold">
-                        Target Start
-                      </CFormLabel>
-                      <Field
-                        name="targetstart"
-                        placeholder="Choose Target Start"
-                        onChange={(e) => {
-                          setFieldValue(`targetstart`, e.target.value)
-                        }}
-                        size="md"
-                        min={moment().format('YYYY-MM-DDTHH:mm')}
-                        value={values?.targetstart}
-                        as={CFormInput}
-                        type="datetime-local"
-                        disabled={values?.pm_id || disableEdit}
-                      />
-                    </CCol>
-                    <CCol>
-                      <CFormLabel className="text-primary fw-semibold">
-                        Target Finish
-                      </CFormLabel>
-                      <Field
-                        name="targetfinish"
-                        placeholder="Choose Target Finish"
-                        onChange={(e) => {
-                          setFieldValue(`targetfinish`, e.target.value)
-                        }}
-                        size="md"
-                        disabled={!values?.targetstart || disableEdit}
-                        min={moment(values?.targetstart).format('YYYY-MM-DDTHH:mm')}
-                        value={values?.targetfinish}
-                        as={CFormInput}
-                        type="datetime-local"
-                      />
-                    </CCol>
-                    {/* <CCol md={3}>
-                    <CFormLabel className="text-primary fw-semibold">
-                      Actual Contact
-                    </CFormLabel>
-                    <Field
-                      name="actual_contact"
-                      placeholder="Choose Scheduled Start"
-                      size="md"
-                      min={moment().format('YYYY-MM-DD')}
-                      as={CFormInput}
-                      type="date"
-                    />
-                  </CCol> */}
-                    <CCol>
-                      <CFormLabel className="text-primary fw-semibold">
-                        Actual Start
-                      </CFormLabel>
-                      <Field
-                        name="actualstart"
-                        placeholder="Choose Actual Start"
-                        onChange={(e) => {
-                          setFieldValue(`actualstart`, e.target.value)
-                        }}
-                        size="md"
-                        min={moment().format('YYYY-MM-DDTHH:mm')}
-                        value={values?.actualstart}
-                        as={CFormInput}
-                        type="datetime-local"
-                      />
-                    </CCol>
-                    <CCol>
-                      <CFormLabel className="text-primary fw-semibold">
-                        Actual Finish
-                      </CFormLabel>
-                      <Field
-                        name="actualfinish"
-                        placeholder="Choose Actual Finish"
-                        onChange={(e) => {
-                          setFieldValue(`actualfinish`, e.target.value)
-                        }}
-                        size="md"
-                        disabled={!values?.actualstart || disableEdit}
-                        min={moment(values?.actualstart).format('YYYY-MM-DDTHH:mm')}
-                        value={values?.actualfinish}
-                        as={CFormInput}
-                        type="datetime-local"
-                      />
-
-                    </CCol>
-                  </CRow>
-                  <CRow className="mb-3">
                     <div className="flex items-center mt-2 justify-between -mx-2">
                       <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
                         Request Submitted
@@ -608,32 +436,27 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                         name="reporteddate"
                         placeholder="Choose Scheduled Start"
                         size="md"
-                        min={moment().format('YYYY-MM-DDTHH:mm')}
+                        min={moment().format('YYYY-MM-DDm')}
                         value={values?.reporteddate}
                         as={CFormInput}
-                        type="datetime-local"
+                        type="date"
                         disabled
                       />
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Affected User <span className="text-red-main">*</span>
+                        Reported Phone <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
-                        name="affectedperson"
-                        placeholder="Select User"
+                        name="phone_number"
+                        placeholder="Enter Reported Phone"
                         valueKey="user_id"
                         labelKey="display_name"
-                        invalid={touched.user_id && errors.user_id}
-                        apiController={getUserSite}
-                        value={values?.affectedperson}
+                        value={values?.phone_number}
                         size="md"
-                        onBlur={() => setFieldTouched('affectedperson')}
-                        onChange={(val) => {
-                          setFieldValue(`affectedperson`, val)
-                        }}
-                        as={SelectPagination}
-                        isClearable
+                        onBlur={() => setFieldTouched('phone_number')}
+                        as={CFormInput}
+                        disabled
                       />
                       {errors.affectedperson && touched.affectedperson ? (
                         <div className="text-sm text-[#e55353] mt-1">{errors.affectedperson}</div>
@@ -641,21 +464,58 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Affected Date <span className="text-red-main">*</span>
+                        Reported E-mail <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
-                        name="affecteddate"
-                        placeholder="Choose Scheduled Start"
+                        name="email"
+                        placeholder="Enter Reported E-mail"
+                        valueKey="email"
+                        labelKey="email"
+                        value={values?.email}
                         size="md"
-                        max={moment().format('YYYY-MM-DDTHH:mm')}
-                        onBlur={() => setFieldTouched('affecteddate')}
-                        invalid={touched.affecteddate && errors.affecteddate}
+                        onBlur={() => setFieldTouched('email')}
+                        onChange={(val) => {
+                          setFieldValue(`email`, val)
+                        }}
                         as={CFormInput}
-                        type="datetime-local"
+                        disabled
                       />
-                      {errors.affecteddate && touched.affecteddate ? (
-                        <div className="text-sm text-[#e55353] mt-1">{errors.affected_date}</div>
+                      {errors.affectedperson && touched.affectedperson ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.affectedperson}</div>
                       ) : null}
+                    </CCol>
+                  </CRow>
+                  <CRow className="mb-3">
+                    <CCol md={3}>
+                      <CFormLabel className="text-primary fw-semibold">
+                        Organization
+                      </CFormLabel>
+                      {console.log(values, 'hahah')}
+                      <Field
+                        name="organization"
+                        placeholder={values?.organization_id || "Enter Organization"}
+                        value={values?.organization_id || ""}
+                        valueKey="value"
+                        labelKey="label"
+                        size="md"
+                        as={CFormInput}
+                        disabled
+                      />
+                    </CCol>
+                    <CCol md={3}>
+                      <CFormLabel className="text-primary fw-semibold">
+                        Site <span className="text-red-main">*</span>
+                      </CFormLabel>
+                      <Field
+                        name="site_id"
+                        placeholder="Enter Site"
+                        value={values?.site_id?.label || ''}
+                        isAllData
+                        handleChange
+                        size="md"
+                        disabled
+                        as={CFormInput}
+                      />
                     </CCol>
                   </CRow>
                 </CContainer>

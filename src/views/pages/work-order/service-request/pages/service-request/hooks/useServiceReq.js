@@ -316,7 +316,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           value: data?.asset_id,
           label: data?.assetnum,
           asset_description: data?.asset_description,
-          site: data?.site, 
+          site: data?.site,
         },
       }),
       // ...(data?.reportedby !== null && {
@@ -348,12 +348,12 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           label: data?.status,
         },
       }),
-     ...(data?.affectedperson && {
-  affectedperson: {
-    user_id: data?.reportedby, // dipakai buat match valueKey
-    display_name: data?.affectedperson, // LABEL YANG BENAR
-  },
-}),
+      ...(data?.affectedperson && {
+        affectedperson: {
+          user_id: data?.reportedby, // dipakai buat match valueKey
+          display_name: data?.affectedperson, // LABEL YANG BENAR
+        },
+      }),
       ticketid: data?.ticketid,
       // affectedperson: data?.affectedperson,
       description: data?.description,

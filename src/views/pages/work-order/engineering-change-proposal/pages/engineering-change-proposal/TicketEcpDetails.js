@@ -14,7 +14,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
    const selectedTicket = useSelector(state => state.ticketEcp.selectedTicketEcp)
 
   console.log("🟦 SELECTED TICKET:", selectedTicket)
-  console.log("🟩 ID DI DETAIL:", selectedTicket?.ticketid)
+  console.log("🟩 ID DI DETAIL:", selectedTicket?.uuid)
   console.log("🟩 MODE:", mode)
   const {
     data,
@@ -120,7 +120,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
             <CCol>
               <label className="text-neutral-text-field">Reported By</label>
               <br />
-              <span className="font-semibold">{data?.reportedby ?? '-'}</span>
+              <span className="font-semibold">{data?.display_name ?? '-'}</span>
             </CCol>
             <CCol>
               <label className="text-neutral-text-field">Reported Date</label>
@@ -130,12 +130,12 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
             <CCol>
               <label className="text-neutral-text-field">Reported Phone</label>
               <br />
-              <span className="font-semibold">{data?.reportedphone ?? '-'}</span>
+              <span className="font-semibold">{data?.phone_number ?? '-'}</span>
             </CCol>
             <CCol>
               <label className="text-neutral-text-field">Reported E-mail</label>
               <br />
-              <span className="font-semibold">{data?.reportedemail ? formatDate(data?.affecteddate) : '-'}</span>
+              <span className="font-semibold">{data?.email ?? '-'}</span>
             </CCol>
           </CRow>
           <CRow>
@@ -147,7 +147,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
             <CCol md={3}>
               <label className="text-neutral-text-field">Asset Site</label>
               <br />
-              <span className="font-semibold">{data?.siteid ?? '-'}</span>
+              <span className="font-semibold">{data?.site ? data?.siteid : '-'}</span>
             </CCol>
           </CRow>
         </CContainer>

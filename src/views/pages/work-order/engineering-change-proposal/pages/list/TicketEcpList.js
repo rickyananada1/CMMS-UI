@@ -73,7 +73,7 @@ const columns = [
   },
   {
     header: 'Reported By',
-    accessorKey: 'reportedby',
+    accessorKey: 'display_name',
     qName: 'qReportedBy',
     size: 100,
     cell: (row) => (
@@ -121,7 +121,7 @@ const columns = [
   },
   {
     header: 'Site',
-    accessorKey: 'siteid',
+    accessorKey: 'site',
     qName: 'qSite',
     size: 100,
     cell: (row) => (
