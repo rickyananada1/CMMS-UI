@@ -166,15 +166,8 @@ const routes = [
     path: '/work-order/engineering-change-proposal',
     exact: true,
     parent: 'Work Order',
-    name: 'Service Request',
+    name: 'Engineering Change Proposal',
     element: ECPTicektTab,
-  },
-  {
-    path: '/work-order/service-request',
-    exact: true,
-    parent: 'Work Order',
-    name: 'Service Request',
-    element: WOServiceReqTab,
   },
   {
     path: '/preventive-maintenance/preventive-maintenance',
