@@ -1,0 +1,6 @@
+export * from './createTicketEcp'
+export * from './deleteTicketEcp'
+export * from './getSelectData'
+export * from './getTicketEcp'
+export * from './updateTicketEcp'
+export * from './uploadFile'

@@ -45,6 +45,7 @@ const workOrderSchema = Yup.object().shape({
   vendor_description: Yup.string().required('Vendor Description is Required'),
   gl_account_id: Yup.string().required('GL Account is Required'),
   job_plan_id: Yup.object().required('Job Plan is Required'),
+  servicerequest: Yup.object().required('Service Request is Required'),
   scheduled_start: Yup.date()
     .required('Scheduled Start is Required')
     .transform((value, originalValue) =>

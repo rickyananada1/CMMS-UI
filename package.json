@@ -72,7 +72,7 @@
     "lucide-react": "^0.553.0",
     "mammoth": "^1.10.0",
     "moment": "^2.30.1",
-    "pdfjs-dist": "^5.4.394",
+    "pdfjs-dist": "^4.8.69",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-app-polyfill": "^3.0.0",

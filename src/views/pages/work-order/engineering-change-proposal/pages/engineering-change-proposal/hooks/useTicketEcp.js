@@ -1,60 +1,70 @@
 /* eslint-disable */
 /* prettier-ignore-start */
 import { useEffect, useMemo, useState } from 'react'
-import { serviceRequestActions } from '../../../slices/serviceRequestSlice'
+import { ticketEcpActions } from '../../../slices/ticketEcpSlice'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  useCreateServiceRequest,
-  useGetServiceReq,
-  useUpdateServiceReq,
-  useDeleteServiceRequest,
-  useGetAssets,
-  useGetSites,
-  useGetServiceReqs,
-  useGetUserSites,
+  useCreateTicketEcp,
+  useGetTicketEcp,
+  useUpdateTicketEcp,
+  useDeleteTicketEcp,
+  useGetTicketEcps,
   useGetReportBy,
+  useGetFailureCodes,
+  useGetSites,
+  useGetAssets,
+  useGetUserSites,
 } from '../services'
 import { useLocation } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 import { useGetListLocation } from 'src/views/pages/locations/pages/location/services'
 import moment from 'moment'
+import { useGetJobPlanDropdown } from 'src/views/pages/job-plan/page/list/services'
+import { useGetPreventiveMaintenanceDropdown } from 'src/views/pages/work-order/preventive-maintenance/pages/list/services'
 import { useGetFrequencySeasonalDetail } from 'src/views/pages/work-order/preventive-maintenance/pages/frequency-seasonal/services'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
 import { useGetFileUploaded } from 'src/views/pages/upload-file/services/getFileUploaded'
+import { organizationActions } from 'src/views/pages/organization/slices/organizationSlices'
 
-var work_order_statuses = [
-  { value: 'WOCREATED', label: 'WO Created' },
-  { value: 'QUEUED', label: 'QUEUED' },
-  { value: 'WAPPR', label: 'WAPPR' },
-  { value: 'IN_PROGRESS', label: 'In Progress' },
-  { value: 'RESOLVED', label: 'Resolved' },
-  { value: 'CLOSED', label: 'Closed' },
-  { value: 'CANCEL', label: 'Cancel' },
-  { value: 'REVISED', label: 'Revised' },
+var ticket_ecp_statuses = [
   { value: 'NEW', label: 'NEW' },
+  { value: 'WAPPR', label: 'WAPPR' },
+  { value: 'APPR', label: 'APPR' },
+  { value: 'REJECT', label: 'REJECT' },
+  { value: 'WSCH', label: 'WSCH' },
+  { value: 'INPRG', label: 'INPRG' },
+  { value: 'RESOLVED', label: 'RESOLVED' },
+  { value: 'COMP', label: 'COMP' },
+  { value: 'CLOSED', label: 'CLOSED' },
+  { value: 'CAN', label: 'CAN' },
 ]
 
-function updateWorkOrderStatuses(currentStatus) {
-  const validStatuses = ['QUEUED', 'WAPPR', 'WOCREATED', 'RESOLVED', 'CLOSED', 'CANCEL', 'REVISED', 'NEW'];
+
+function updateTicketEcpStatuses(currentStatus) {
+  const validStatuses = [
+    'NEW',
+    'WAPPR',
+    'APPR',
+    'REJECT',
+    'WSCH',
+    'INPRG',
+    'RESOLVED',
+    'COMP',
+    'CLOSED',
+    'CAN'];
 
   if (!validStatuses.includes(currentStatus)) {
+    console.error(`Unknown service request status: ${currentStatus}`);
     return;
   }
-
-  work_order_statuses.length = 0;
-
-  validStatuses.forEach(status => {
-    work_order_statuses.push({
-      value: status,
-      label: status,
-    });
-  });
+  ticket_ecp_statuses.length = 0;
+  ticket_ecp_statuses.push({ value: currentStatus, label: currentStatus });
 }
 
-function generateServiceRequest() {
-  const prefix = 'SR'
-  const length = 5
+function generateTicketEcp() {
+  const prefix = 'ECP'
+  const length = 8
 
   // Generate random alphanumeric characters (uppercase and digits)
   const characters = '0123456789'
@@ -66,25 +76,27 @@ function generateServiceRequest() {
   return prefix + randomString
 }
 
-const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
+const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
   const Notification = withReactContent(Swal)
   const dispatch = useDispatch()
-  const selectedRow = useSelector((state) => state.serviceRequest?.selectedServiceRequest)
+  const selectedRow = useSelector((state) => state.ticketEcp?.selectedTicketEcp)
   const userOrgId = useSelector((state) => state.auth?.user?.organization_id)
-  const siteid = useSelector((state) => state.auth?.user?.site)
-  const reportedOrg = useSelector((state) => state.auth?.user?.user_id)
-  const oke = useSelector((state) => state.auth?.user?.site)
+  const userSite = {
+    site_id: useSelector((state) => state.auth?.user?.site_id),
+    site: useSelector((state) => state.auth?.user?.site),
+  }
+  const userService = {
+    ticketid: useSelector((state) => state.auth?.user?.site),
+    // description: useSelector((state) => state.auth?.user?.description),
+  }
   const repId = {
     user_id: useSelector((state) => state.auth?.user?.user_id),
     reportedby: useSelector((state) => state.auth?.user?.display_name),
   }
-  const userSite = {
-    siteid: useSelector((state) => state.auth?.user?.site_id),
-    site: useSelector((state) => state.auth?.user?.site),
-  }
-  const visiblePopUp = useSelector((state) => state.serviceRequest?.visiblePopUp)
+  const user = useSelector((state) => state.auth)
+  const visiblePopUp = useSelector((state) => state.ticketEcp?.visiblePopUp)
 
-  const [errorMessage, setErrorMessage] = useState('')
+  const [errorMessagePage, setErrorMessage] = useState('')
   const [data, setData] = useState({})
   const [isLoading, setIsLoading] = useState(true)
   const [disableEdit, setDisableEdit] = useState(false)
@@ -92,7 +104,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const [isAssetChanged, setIsAssetChanged] = useState(false)
   const [isLocationDisabled, setIsLocationDisabled] = useState(false)
   const [isLocationFirst, setIsLocationFirst] = useState(null)
-  // const [isModalOpen, setIsModalOpen] = useState(false)
   const [dataFile, setDataFile] = useState([])
   const [isDrawerOpen, setDrawerOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -104,37 +115,28 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     setSelectedFile(null)
   }
 
-  const getServiceRequestService = useGetServiceReq()
+  const getTicketEcpService = useGetTicketEcp()
   const location = useLocation()
 
   const [formValue, setFormValue] = useState({
-    ticketid: generateServiceRequest(),
-    description: "",          // text input
-    status: null,             // select
-    detailsummary: "",        // Editor
-
-    // LOCATION
-    location_id: null,        // select
-    location: "",             // string
-    location_description: "", // textarea
-
-    // ASSET
-    asset_id: null,           // select
-    asset_num: "",             // string
-    asset_description: "",    // textarea
-
-    // SITE
+    ticketid: generateTicketEcp(),
+    description: null,
+    location_id: null,
+    location: null,
+    location_description: null,
+    asset_id: null,
+    asset_id: null,
+    asset_num: null,
+    asset_description: null,
     site_id:
-      userSite?.siteid !== null
+      userSite?.site_id !== null
         ? {
-          value: userSite?.siteid,
+          value: userSite?.site_id,
           label: userSite?.site,
         }
         : null,
-
-    glaccount: "",            // text input
-
-    // REPORTED
+    status: null,
+    detailsummary: null,
     reportedby:
       repId?.user_id !== null
         ? {
@@ -142,31 +144,20 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           label: repId?.reportedby,
         }
         : null,
-    reporteddate: "",         // date
-    display_name: "",
-
-    // PERSON
-    affectedperson: null,     // select
-    user_id: null,            // optional
-    // affecteddate: "",         // date
-
-    // DATES
-    targetstart: "",          // date
-    targetfinish: "",         // date
-    actualstart: "",          // date
-    actualfinish: "",         // date
-  });
-
+    display_name: null,
+    reporteddate: null,
+    phone_number: null,
+    email: null,
+    organization_id: null,
+  })
   const [oldStatus, setOldStatus] = useState('')
-  const [assetParams, setAssetParams] = useState({})
-
 
   const setSelectedRow = (param) => {
-    dispatch(serviceRequestActions.setSelectedServiceReq(param))
+    dispatch(ticketEcpActions.setSelectedTicketEcp(param))
   }
 
   useEffect(() => {
-    mode !== 'Create' ? getServReq() : setIsLoading(false)
+    mode !== 'Create' ? getTicketEcps() : setIsLoading(false)
     mode === 'Delete' && deleteWorkOrder()
     mode === 'Update' && validateEdit()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -189,21 +180,18 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const getLocations = useGetListLocation()
   const getAssets = useGetAssets()
-  const getAssetsLoc = useGetAssets(assetParams)
-  const { data: assetOptions = [] } = useGetAssets()
-  const getUserSite = useGetUserSites({ siteid: siteid })
-  const affectedperson = {
-    user_id: useSelector((state) => state.auth?.user?.user_id),
-    reportedby: useSelector((state) => state.auth?.user?.display_name),
-  }
-  const getUserLogin = useGetServiceReqs()
-  const getReportBy = useGetReportBy()
   const getSites = useGetSites({ org_id: userOrgId })
-  const getWorkOrders = useGetServiceReqs()
+  // const getFailureCodes = useGetFailureCodes()
+  const getDatTicketEcp = useGetTicketEcps()
+  const site = useSelector((state) => state.auth?.user?.site)
+  const getReportBy = useGetReportBy()
+  const getUserSites = useGetUserSites({ site })
+  const getJobPlanList = useGetJobPlanDropdown()
+  const getPMList = useGetPreventiveMaintenanceDropdown()
 
-  const getServReq = async (params) => {
+  const getTicketEcps = async (params) => {
     setIsLoading(true)
-    await getServiceRequestService
+    await getTicketEcpService
       .mutateAsync({
         id: selectedRow?.uuid,
         params: params,
@@ -228,8 +216,8 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     if (mode === 'Update' && selectedRow?.uuid) {
       const woId = selectedRow.uuid
       return {
-        uploadUrl: `/servicerequests/${woId}/attachment`,
-        fetchUrl: `/servicerequests/${woId}/attachment`,
+        uploadUrl: `/work-orders/${woId}/attachment`,
+        fetchUrl: `/work-orders/${woId}/attachment`,
       }
     }
     // For create mode, return empty strings
@@ -239,30 +227,19 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     }
   }, [mode, selectedRow])
 
-  // const fileUploadProps = useMemo(
-  //   () => ({
-  //     fieldName,
-  //     uploadUrl,
-  //     fetchUrl,
-  //     mode,
-  //   }),
-  //   [fieldName, uploadUrl, fetchUrl, mode],
-  // )
-
   const [files, setFiles] = useState([])
+
   const formId = useMemo(() => selectedRow?.uuid, [selectedRow])
 
   const {
-    errorMessage: messageError,
-    onDrop,
-    removeFiles,
+    errorMessage,
     MAX_FILE_SIZE,
     acceptedFileTypes,
     uploadFiles,
     handleDownload,
-    setDeletedFiles,
     deletePendingFiles,
     deletedFiles,
+    setDeletedFiles,
     tempFiles,
     setTempFiles,
     isModalOpen,
@@ -293,12 +270,12 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   }, [deletedFiles])
 
   useEffect(() => {
-    if (!getServiceRequestService.data?.data?.data) return
-    const data = getServiceRequestService.data.data.data
+    if (!getTicketEcpService.data?.data?.data) return
+    const data = getTicketEcpService.data.data.data
     setOldStatus(data?.status)
-    // updateWorkOrderStatuses(data?.status)
+    // updateTicketEcpStatuses(data?.status)
     if (data?.status) {
-      updateWorkOrderStatuses(data.status)
+      updateTicketEcpStatuses(data.status)
     }
     const row = data[0];
     setFormValue((prev) => ({
@@ -348,12 +325,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           label: data?.status,
         },
       }),
-      ...(data?.affectedperson && {
-        affectedperson: {
-          user_id: data?.reportedby, // dipakai buat match valueKey
-          display_name: data?.affectedperson, // LABEL YANG BENAR
-        },
-      }),
       ticketid: data?.ticketid,
       // affectedperson: data?.affectedperson,
       description: data?.description,
@@ -361,31 +332,12 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       asset_description: data?.asset_description,
       location_description: data?.location_description,
       display_name: data?.display_name,
-      glaccount: data?.glaccount,
 
-      service_request_attachment_url: data?.service_request_attachment_url,
+      ticekt_ecp_attachment_url: data?.ticekt_ecp_attachment_url,
 
-      scheduled_start: data?.scheduled_start
-        ? moment(data?.scheduled_start).format('YYYY-MM-DDTHH:mm')
-        : null,
-      targetstart: data?.targetstart
-        ? moment(data?.targetstart).format('YYYY-MM-DDTHH:mm')
-        : null,
-      targetfinish: data?.targetfinish
-        ? moment(data?.targetfinish).format('YYYY-MM-DDTHH:mm')
-        : null,
-      actualstart: data?.actualstart
-        ? moment(data?.actualstart).format('YYYY-MM-DDTHH:mm')
-        : null,
-      actualfinish: data?.actualfinish
-        ? moment(data?.actualfinish).format('YYYY-MM-DDTHH:mm')
-        : null,
       reporteddate: data?.reporteddate
         ? moment(data?.reporteddate).format('YYYY-MM-DDTHH:mm')
         : moment().format("YYYY-MM-DDTHH:mm"),
-      affecteddate: data?.affecteddate
-        ? moment(data?.affecteddate).format('YYYY-MM-DDTHH:mm')
-        : null,
     }))
 
     setIsLocationFirst(data?.is_location_first)
@@ -399,43 +351,11 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       setIsLocationDisabled(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getServiceRequestService.data])
-
-  const serviceRequestDetailData = useSelector(
-    (state) => state.serviceRequest.serviceRequestDetailData
-  )
-
-  const selectedServiceReq = useSelector(
-    (state) => state.serviceRequest?.selectedServiceRequest
-  )
+  }, [getTicketEcpService.data])
 
 
-  const { mutate: getServiceReq } = useGetServiceReq()
-
-  useEffect(() => {
-    if (!selectedServiceReq) return
-
-    const savedData = localStorage.getItem('serviceRequestDetailData')
-    if (savedData) {
-      // restore dari localStorage
-      dispatch(serviceRequestActions.setServiceRequestDetailData(JSON.parse(savedData)))
-      return
-    }
-
-    if (!serviceRequestDetailData || serviceRequestDetailData.length === 0) {
-      getServiceReq({ id: selectedServiceReq.uuid }, {
-        onSuccess: (data) => {
-          dispatch(serviceRequestActions.setServiceRequestDetailData(data))
-          localStorage.setItem('serviceRequestDetailData', JSON.stringify(data)) // simpan
-        },
-        onError: (err) => console.error(err),
-      })
-    }
-  }, [selectedServiceReq?.uuid])
-
-
-  const createServiceRequest = useCreateServiceRequest()
-  const updateServiceReq = useUpdateServiceReq()
+  const createTicketEcp = useCreateTicketEcp()
+  const updateTicketEcp = useUpdateTicketEcp()
 
   const handleSubmit = async (values, formikHelpers) => {
     Notification.fire({
@@ -447,7 +367,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       confirmButtonText: 'Yes! Confirm',
       confirmButtonColor: '#2671D9',
     }).then(async (result) => {
-      setIsLoading(true)
       if (result.isConfirmed) {
         const modifiedFormData = {
           ...values,
@@ -457,45 +376,46 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           asset_id: values?.asset_id?.value ?? null,
           assetnum: values?.asset_id?.label ?? null,
           asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
-          reportedby: values?.reportedby?.value ? Number(values.reportedby.value) : null,
-          // siteid: values?.asset_id?.site_id ?? null,
-          siteid: values?.site_id ?? values?.asset_id?.site ?? null,
-          glaccount: values?.glaccount || null,
+          reportedby: values?.reportedby?.value
+            ? String(values.reportedby.value)
+            : null,
+
+          phone_number: values?.phone_number || "",
+          email: values?.email || "",
+          siteid:
+            values?.site_id?.value
+              ? String(values.site_id.value)
+              : values?.asset_id?.site
+                ? String(values.asset_id.site)
+                : null,
           description: values?.description || "",
           status: values?.status?.value ?? null,
           detailsummary: values?.detailsummary || "",
-          affectedperson: values?.affectedperson?.value ?? null,
-          targetstart: values?.targetstart ? moment(values?.targetstart).toISOString(true) : null,
-          targetfinish: values?.targetfinish ? moment(values?.targetfinish).toISOString(true) : null,
-          actualstart: values?.actualstart ? moment(values?.actualstart).toISOString(true) : null,
-          actualfinish: values?.actualfinish ? moment(values?.actualfinish).toISOString(true) : null,
+          organization_id: values?.organization_id || "",
+          organization: values?.organization || "",
           reportdate: values?.reportdate
-            ? moment(values.reportdate).toISOString(true)
-            : moment().toISOString(true),
-          affecteddate: values?.affecteddate ? moment(values?.affecteddate).toISOString(true) : null,
-          is_location_first: values?.is_location_first ?? null,
-        };
+            ? moment(values.reportdate).format('YYYY-MM-DD')
+            : moment().format('YYYY-MM-DD'),
+          is_location_first: values?.is_location_first,
+        }
 
         let woId
         let fileUploadUrl
         try {
           if (mode === 'Create') {
-            const response = await createServiceRequest.mutateAsync({ data: modifiedFormData })
+            const response = await createTicketEcp.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.uuid
 
             if (!woId) {
-              throw new Error('Service Request ID not returned')
+              throw new Error('Work Order ID not returned')
             }
 
-            fileUploadUrl = `/servicerequests/${woId}/attachment`
+            fileUploadUrl = `/work-orders/${woId}/attachment`
           } else {
-            const updateRes = await updateServiceReq.mutateAsync({
-              data: {
-                ...modifiedFormData,
-                uuid: selectedRow.uuid,
-              }
+            const updateRes = await updateTicketEcp.mutateAsync({
+              id: selectedRow?.uuid,
+              data: modifiedFormData,
             })
-
             woId = selectedRow?.uuid
             fileUploadUrl = uploadUrl // Use existing URL for update mode
 
@@ -510,18 +430,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           }
 
           // Upload files with the correct URL
-          // if (files?.length > 0 && woId) {
-          //   try {
-          //     await uploadFiles(files, fileUploadUrl)
-          //   } catch (err) {
-          //     // Handle Nginx 413 or general upload error
-          //     const status = err?.response?.status
-          //     if (status === 413) {
-          //       throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-          //     }
-          //     throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
-          //   }
-          // }
           if (files?.length > 0 && woId) {
             const uploadResult = await uploadFiles(files, fileUploadUrl)
             setUploadSummary(uploadResult)
@@ -535,7 +443,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           Notification.fire({
             icon: 'success',
             title: 'Success',
-            text: `Service Request ${messageSuccess}`,
+            text: `Work Order ${messageSuccess}`,
             customClass: { confirmButton: 'btn btn-primary hover:text-white' },
             buttonsStyling: false,
           }).then(() => {
@@ -549,7 +457,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             text: error.response?.data?.message || error.message || 'Something went wrong!',
           })
         } finally {
-          setIsLoading(false)
           formikHelpers.setSubmitting(false)
         }
       }
@@ -557,7 +464,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   }
 
   const handleRetryUpload = async (fileToRetry) => {
-    const fileUploadUrl = `/servicerequests/${selectedRow?.uuid}/attachment` // Assuming assetId is available
+    const fileUploadUrl = `/asset/${selectedRow?.asset_id}/attachment` // Assuming assetId is available
 
     setUploadSummary((prevSummary) => ({
       ...prevSummary,
@@ -577,53 +484,67 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     setAction('Read')
   }
 
-  const deleteServiceRequest = useDeleteServiceRequest()
+  const deleteTicketEcpService = useDeleteTicketEcp()
 
   const validateEditDelete = async (type = 'edit') => {
-    const notifTitle = `Unable to ${type} Service Request`
+    const notifTitle = `Unable to ${type} Work Order`
     return new Promise((resolve) => {
-      if (!selectedRow) {
-        resolve(false)
-        return
-      }
-
-      // 1) Jika punya parent -> tidak boleh hapus
-      if (selectedRow.reportedby != null) {
-        Notification.fire({
-          icon: 'error',
-          title: notifTitle,
-          html: `Service Request has a parent`,
-        }).then(() => resolve(false))
-        return
-      }
-
-      // 2) Jika sudah dibatalkan atau ditutup -> tidak boleh hapus
-      if (selectedRow.status === 'CANCEL') {
-        Notification.fire({
-          icon: 'error',
-          title: notifTitle,
-          html: `Service Request already cancelled`,
-        }).then(() => resolve(false))
-        return
-      }
-      if (selectedRow.status === 'CLOSE') {
-        Notification.fire({
-          icon: 'error',
-          title: notifTitle,
-          html: `Service Request already closed`,
-        }).then(() => resolve(false))
-        return
-      }
-
-      // 3) Skenario khusus (opsional): jika status 'REVISED' dan reportedby null
-      if (type === 'edit' && selectedRow.status === 'REVISED' && selectedRow.reportedby === null) {
+      if (
+        selectedRow.parent_wo_id !== null &&
+        !['INPRG', 'COMP', 'CLOSE'].includes(selectedRow.status)
+      ) {
         setDisableEdit(true)
         resolve(true)
-        return
+      } else if (selectedRow.status === 'INPRG' && selectedRow.parent_wo_id === null) {
+        setDisableEdit(true)
+        resolve(true)
+      } else if (selectedRow.status === 'INPRG') {
+        Notification.fire({
+          icon: 'error',
+          title: notifTitle,
+          html: `Work Order already started ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
+        }).then(async (result) => {
+          if (result.isConfirmed || result.isDismissed) {
+            resolve(false)
+          }
+        })
+      } else if (selectedRow.status === 'CLOSE') {
+        Notification.fire({
+          icon: 'error',
+          title: notifTitle,
+          html: `Work Order already closed ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
+        }).then(async (result) => {
+          if (result.isConfirmed || result.isDismissed) {
+            resolve(false)
+          }
+        })
+      } else if (selectedRow.status === 'COMP') {
+        Notification.fire({
+          icon: 'error',
+          title: notifTitle,
+          html: `Work Order already completed ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
+        }).then(async (result) => {
+          if (result.isConfirmed || result.isDismissed) {
+            resolve(false)
+          }
+        })
+      } else if (selectedRow.parent_wo_id !== null) {
+        Notification.fire({
+          icon: 'error',
+          title: notifTitle,
+          html: `Work Order has a parent ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
+            }`,
+        }).then(async (result) => {
+          if (result.isConfirmed || result.isDismissed) {
+            resolve(false)
+          }
+        })
+      } else {
+        resolve(true)
       }
-
-      // Default: boleh delete/edit
-      resolve(true)
     })
   }
 
@@ -639,35 +560,35 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     Notification.fire({
       icon: 'warning',
       title: 'Are you sure?',
-      text: `Do you want to delete ${selectedRow.ticketid}?`,
+      text: `Do you want to delete ${selectedRow.work_order_code}?`,
       showDenyButton: true,
       confirmButtonText: 'Confirm',
       denyButtonText: 'Cancel',
     }).then(async (result) => {
       if (result.isConfirmed) {
-        try {
-          await deleteServiceRequest.mutateAsync({
-            id: selectedRow.uuid, // tetap kirim ticketid via api layer
+        await deleteTicketEcpService
+          .mutateAsync({
+            id: selectedRow.uuid,
           })
-
-          await Notification.fire({
-            icon: 'success',
-            title: 'Success',
-            text: `${selectedRow.ticketid} deleted successfully`,
+          .then((res) => {
+            Notification.fire({
+              icon: 'success',
+              title: 'Success',
+              text: `${selectedRow.work_order_code} deleted successfully`,
+            }).then(() => {
+              setSelectedRow(null)
+              setTabIndex(0)
+              setAction('Read')
+            })
           })
-
-          setSelectedRow(null)
-          setTabIndex(0)
-          setAction('Read')
-        } catch (err) {
-          Notification.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: err?.response?.data?.message || 'Delete failed',
+          .catch((err) => {
+            Notification.fire({
+              icon: 'error',
+              title: 'Error!',
+              text: err.response.data.message,
+            })
+            setErrorMessage(err.response.data.message)
           })
-
-          setErrorMessage(err?.response?.data?.message)
-        }
       } else {
         setAction('Read')
       }
@@ -678,7 +599,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     Notification.fire({
       icon: 'warning',
       title: 'Are you sure?',
-      text: `Do you want to delete ${data?.reportedby ?? '-'} as a Parent of ${data?.ticketid
+      text: `Do you want to delete ${data?.parent_wo ?? '-'} as a Parent of ${data?.work_order_code
         }?`,
       showDenyButton: true,
       confirmButtonText: 'Confirm',
@@ -687,10 +608,10 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       if (result.isConfirmed) {
         const dataWithRemovedParent = {
           ...data,
-          reportedby: null,
+          parent_wo_id: null,
         }
 
-        await updateServiceReq
+        await updateTicketEcp
           .mutateAsync({
             id: selectedRow.uuid,
             data: dataWithRemovedParent,
@@ -699,10 +620,10 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             Notification.fire({
               icon: 'success',
               title: 'Success!',
-              text: `Service Request parent deleted successfully.`,
+              text: `Work Order parent deleted successfully.`,
             }).then(() => {
-              setSelectedRow({ ...selectedRow, reportedby: null })
-              setData({ ...selectedRow, reportedby: null })
+              setSelectedRow({ ...selectedRow, parent_wo_id: null })
+              setData({ ...selectedRow, parent_wo_id: null })
               setAction('Read')
               setVisible(false)
             })
@@ -749,27 +670,11 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   }
 
   const getDetailFile = useGetFileUploaded({
-    url: `/servicerequests/${selectedRow?.uuid}/attachment`,
+    url: `/work-orders/${selectedRow?.uuid}/attachment`,
     config: {
       enabled: false,
     },
   })
-
-  const { handleDownload: downloadFile } = useFileUpload({
-    fieldName: 'files',
-    uploadUrl: '',
-    fetchUrl: `/servicerequest/${selectedRow?.uuid}/attachment`,
-    mode,
-  })
-
-  const ticketId = useSelector(
-    (state) => state.serviceRequest.selectedServiceRequest
-  );
-
-  // useEffect(() => {
-  //   if (!ticketId) return;
-  //   getServiceRequestService.mutate(ticketId);
-  // }, [ticketId]);
 
   useEffect(() => {
     if (mode !== 'Create') {
@@ -779,12 +684,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   }, [location.pathname, mode])
 
   useEffect(() => {
-    if (mode !== 'Create' && selectedRow?.uuid) {
-      getServReq()
-    }
-  }, [selectedRow, mode])
-
-  useEffect(() => {
     if (mode === 'Create') return
     setDataFile(getDetailFile.data?.data?.data)
   }, [getDetailFile.data, mode])
@@ -792,16 +691,15 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const uploadModalProps = useMemo(
     () => ({
       files: files || [],
-      messageError,
-      onDrop,
       setFiles,
+      errorMessage,
       mode,
-      removeFiles,
       MAX_FILE_SIZE,
       acceptedFileTypes,
       handleDownload,
-      setDeletedFiles,
       uploadFiles,
+      deletedFiles,
+      setDeletedFiles,
       tempFiles,
       setTempFiles,
       isModalOpen,
@@ -814,62 +712,42 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     }),
     [
       files,
-      messageError,
-      onDrop,
-      removeFiles,
+      setFiles,
+      errorMessage,
       MAX_FILE_SIZE,
       acceptedFileTypes,
-      setFiles,
       handleDownload,
+      mode,
+      uploadFiles,
+      deletedFiles,
       setDeletedFiles,
       tempFiles,
-      uploadFiles,
       setTempFiles,
       isModalOpen,
       setIsModalOpen,
       handleModalClose,
       handleFileSelect,
       duplicateFileError,
-      mode,
     ],
   )
 
   return {
     data,
     isLoading,
-    errorMessage,
+    errorMessagePage,
     formValue,
     selectedRow,
-    serviceRequestDetailData,
     setSelectedRow,
     handleSubmit,
-    downloadFile,
-    // getWorkTypes,
-    // getWorkPriorities,
-    // getWorkClassifications,
     getLocations,
     getAssets,
-    getAssetsLoc,
-    setAssetParams,
-    assetOptions,
-    getUserSite,
-    getReportBy,
-    getUserLogin,
-    isUploadSummaryModalOpen,
-    uploadSummary,
-    setIsUploadSummaryModalOpen,
-    handleRetryUpload,
-    handleOK,
-    // getUsers,
     getSites,
-    // getConfig,
-    // getFailureCodes,
-    // getHazardGroup,
-    getWorkOrders,
-    work_order_statuses,
+    getUserSites,
+    ticket_ecp_statuses,
+    getReportBy,
     disableEdit,
-    // getJobPlanList,
-    // getPMList,
+    getJobPlanList,
+    getPMList,
     getScheduledDateFromPM,
     isLocationChanged,
     setIsLocationChanged,
@@ -881,21 +759,27 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     setIsLocationFirst,
     isModalOpen,
     setIsModalOpen,
+    getDatTicketEcp,
     fieldName,
     uploadUrl,
     fetchUrl,
     formDeletedFiles,
     uploadModalProps,
-    uploadFiles,
     dataFile,
     isDrawerOpen,
     setDrawerOpen,
     selectedFile,
     setSelectedFile,
     handleOpenDrawer,
+    uploadFiles,
     files,
+    isUploadSummaryModalOpen,
+    setIsUploadSummaryModalOpen,
+    uploadSummary,
+    handleRetryUpload,
+    handleOK,
     isNewFiles,
   }
 }
 
-export default useServiceReq
+export default useTicketEcp

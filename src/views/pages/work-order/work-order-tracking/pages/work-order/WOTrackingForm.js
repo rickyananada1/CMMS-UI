@@ -969,9 +969,8 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                   <CRow>
                     <CCol md={3}>
                       <CFormLabel className="text-primary fw-semibold">
-                        Service request <span className="text-red-main">*</span>
+                        Service request <span className="text-red-main"></span>
                       </CFormLabel>
-                      {console.log(values, 'valuesvalues')}
                       <Field
                         name="ticketid"
                         placeholder="Select Ticket"
@@ -990,9 +989,9 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                         as={SelectPagination}
                         isClearable
                       />
-                      {errors.job_plan_id && touched.job_plan_id ? (
-                        <div className="text-sm text-[#e55353] mt-1">{errors.job_plan_id}</div>
-                      ) : null}
+                      {/* {errors.servicerequest && touched.servicerequest ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.servicerequest}</div>
+                      ) : null} */}
                     </CCol>
                     <CCol md={3}>
                       <CFormLabel className="text-primary fw-semibold">Summary</CFormLabel>

@@ -5,7 +5,7 @@ import { GoSearch } from 'react-icons/go'
 import { Table } from 'src/components/elements/table'
 import { useList } from './hooks'
 import { MdOutlineCloudDownload } from 'react-icons/md'
-import { useGetServiceRequest } from './services/getServiceRequest'
+import { useGetTicketEcp } from './services/getTicketEcp'
 import { CiFilter } from 'react-icons/ci'
 import clsx from 'clsx'
 
@@ -14,46 +14,50 @@ const STATUS_STYLES = {
     label: "NEW",
     class: "border-[#7F7F80] text-[#7F7F80] max-w-[6.5rem]",
   },
-  QUEUED: {
-    label: "QUEUED",
-    class: "border-[#F5BBDE] bg-[#FDF2F9] text-[#7A1D36] max-w-[7rem]",
-  },
   WAPPR: {
     label: "WAPPR",
     class: "border-[#F1AEAC] bg-[#F9ECEC] text-[#D46391] max-w-[6rem]",
   },
-  IN_PROGRESS: {
-    label: "In Progress",
-    class: "border-[#BAD1F3] bg-[#E9F1FB] text-[#2671D9] max-w-[8rem]",
+  APPR: {
+    label: "APPR",
+    class: "border-[#3B858E] bg-[#225360] text-[#DBF0F0] max-w-[6rem]",
   },
-  WOCREATED: {
-    label: "WO Created",
-    class: "border-[#ABB5DC] bg-[#F4F5FA] text-[#2E3368] max-w-[9rem]",
+  REJECT: {
+    label: "REJECT",
+    class: "border-[#6C1E3C] bg-[#AF2A4F] text-[#F5D6DE] max-w-[6.5rem]",
   },
-  REVISED: {
-    label: "Revised",
-    class: "border-[#FFD6AD] bg-[#FFF3E6] text-[#FF8000] max-w-[6.5rem]",
+  WSCH: {
+    label: "WSCH",
+    class: "border-[#748BF4] bg-[#D0D8FB] text-[#3E4678] max-w-[6rem]",
+  },
+  INPRG: {
+    label: "INPRG",
+    class: "border-[#BAD1F3] bg-[#E9F1FB] text-[#2671D9] max-w-[6rem]",
   },
   RESOLVED: {
     label: "Resolved",
     class: "border-[#8ADFC3] bg-[#E2FCF3] text-[#0EA976] max-w-[7rem]",
   },
+  COMP: {
+    label: "COMP",
+    class: "border-[#0695C6] bg-[#FBFBFB] text-[#097FEB] max-w-[6.5rem]",
+  },
   CLOSED: {
     label: "Closed",
     class: "border-[#7FB1B1] bg-[#EBF4F5] text-[#2D6A61] max-w-[6rem]",
   },
-  CANCEL: {
-    label: "Cancel",
+  CAN: {
+    label: "Can",
     class: "border-[#FD8A8A] bg-[#FFE5E6] text-[#FF5656] max-w-[6rem]",
   },
 };
 
 const columns = [
   {
-    header: 'Service Request',
+    header: 'ECP Number',
     accessorKey: 'ticketid',
     qName: 'qTicketId',
-    size: 200,
+    size: 100,
     cell: (row) => (
       <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
     ),
@@ -68,15 +72,25 @@ const columns = [
     ),
   },
   {
-    header: 'Status SR',
+    header: 'Reported By',
+    accessorKey: 'display_name',
+    qName: 'qReportedBy',
+    size: 100,
+    cell: (row) => (
+      <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
+    ),
+  },
+  {
+    header: 'Status ECP',
     accessorKey: 'status',
     qName: 'qStatus',
     qType: 'select',
+    size: 100,
     cell: (row) => {
       const value = row.getValue();
       const status = STATUS_STYLES[value] || {
         label: value,
-        class: "bg-gray-100 text-gray-600",
+        class: "border-gray-300 bg-gray-100 text-gray-600",
       };
 
       return (
@@ -94,63 +108,28 @@ const columns = [
 
     qOptions: [
       { label: "NEW", value: "NEW" },
-      { label: "Queued", value: "QUEUED" },
-      { label: "Waiting Approval", value: "WAPPR" },
-      { label: "In Progress", value: "IN_PROGRESS" },
-      { label: "WO Created", value: "WOCREATED" },
-      { label: "Revised", value: "REVISED" },
-      { label: "Resolved", value: "RESOLVED" },
-      { label: "Closed", value: "CLOSED" },
-      { label: "Cancel", value: "CANCEL" },
+      { label: "WAPPR", value: "WAPPR" },
+      { label: "APPR", value: "APPR" },
+      { label: "REJECT", value: "REJECT" },
+      { label: "WSCH", value: "WSCH" },
+      { label: "INPRG", value: "INPRG" },
+      { label: "RESOLVED", value: "RESOLVED" },
+      { label: "COMP", value: "COMP" },
+      { label: "CLOSED", value: "CLOSED" },
+      { label: "CAN", value: "CAN" },
     ],
   },
   {
-    header: 'Reported By',
-    accessorKey: 'display_name',
-    qName: 'qDisplayName',
+    header: 'Site',
+    accessorKey: 'site',
+    qName: 'qSite',
     size: 100,
     cell: (row) => (
       <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
     ),
   },
-  {
-    header: 'Asset',
-    accessorKey: 'asset_num',
-    qName: 'qAssetNum',
-    size: 250,
-    cell: (row) => (
-      <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
-    ),
-  },
-  {
-    header: 'Asset Description',
-    accessorKey: 'asset_description',
-    qName: 'qAssetDescription',
-    size: 250,
-    cell: (row) => (
-      <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
-    ),
-  },
-  {
-    header: 'Location',
-    accessorKey: 'location',
-    qName: 'qLocation',
-    size: 250,
-    cell: (row) => (
-      <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
-    ),
-  },
-  {
-    header: 'Location Description',
-    accessorKey: 'location_description',
-    qName: 'qLocationDescription',
-    size: 250,
-    cell: (row) => (
-      <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
-    ),
-  },
 ]
-const ServiceRequestList = () => {
+const TicketEcpList = () => {
   const {
     selectedRow,
     setSelectedRow,
@@ -160,6 +139,22 @@ const ServiceRequestList = () => {
     downloadServiceReq,
     resetSelectedTaskEtc,
   } = useList()
+
+
+  //   // fetch detail ketika selectedRow berubah
+  //  const { data: detailSR, isLoading: isDetailLoading } = useGetServiceRequestDetail({
+  //     id: selectedRow?.ticketid,
+  //     config: {
+  //       enabled: !!selectedRow?.ticketid, // penting agar tidak fetch undefined
+  //     },
+  //   })
+
+  //   useEffect(() => {
+  //     if (detailSR) {
+  //       // simpan data lengkap ke Redux
+  //       dispatch(serviceRequestActions.setselectedServiceReq(detailSR.data))
+  //     }
+  //   }, [detailSR, dispatch])
 
   return (
     <div>
@@ -189,15 +184,14 @@ const ServiceRequestList = () => {
           </button>
         </div>
         <Table
-          storeKey="service-request-list"
           tableRef={tableRef}
           columns={columns}
-          apiController={useGetServiceRequest}
+          apiController={useGetTicketEcp}
           query={{
             search: searchDebounce || undefined,
           }}
           selectableRowSelected={(row) =>
-            row.original?.uuid === selectedRow?.uuid
+            row.original?.ticketid === selectedRow?.ticketid
           }
 
           onRowClicked={async (row) => {
@@ -205,8 +199,6 @@ const ServiceRequestList = () => {
             setSelectedRow(row.original)
             resetSelectedTaskEtc()
           }}
-
-
           isAutoSelectFirstRow={false}
           hasAutoNumber
           isWithSearchField
@@ -226,4 +218,4 @@ const ServiceRequestList = () => {
   )
 }
 
-export default ServiceRequestList
+export default TicketEcpList
