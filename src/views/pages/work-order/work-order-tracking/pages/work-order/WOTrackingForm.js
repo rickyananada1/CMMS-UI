@@ -979,11 +979,11 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                         valueKey="uuid"
                         labelKey="ticketid"
                         otherKey={{
-                          description: 'description',
+                          summary: 'description',
                         }}
                         onChange={(val) => {
                           setFieldValue('ticketid', val)
-                          setFieldValue('description', val?.description || '')
+                          setFieldValue('summary', val?.description || '')
                         }}
                         size="md"
                         as={SelectPagination}
@@ -996,9 +996,9 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                     <CCol md={3}>
                       <CFormLabel className="text-primary fw-semibold">Summary</CFormLabel>
                       <Field
-                        name="description"
+                        name="summary"
                         placeholder="No Description"
-                        value={values?.description || ''}
+                        value={values?.summary || ''}
                         onChange={handleChange}
                         size="md"
                         disabled
