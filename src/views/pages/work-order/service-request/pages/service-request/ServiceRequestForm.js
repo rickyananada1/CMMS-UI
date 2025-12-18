@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore-start */
-import React from 'react'
+import React, { useState } from 'react'
 import {
   CContainer,
   CFormLabel,
@@ -54,6 +54,8 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
     uploadSummary,
     uploadModalProps,
     isNewFiles,
+    getAssetsLoc,
+    setAssetParams,
   } = useServiceReq({
     mode,
     setAction,
@@ -78,63 +80,177 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
           values,
           touched,
         }) => {
-          const normalizeLocation = (item) => ({
-            value: item.location_id,
-            label: `${item.location} - ${item.location_description}`,
-            location: String(item.location),
-            location_description: item.location_description ?? '',
-            location_id: item.location_id,
+
+          const [assetParams, setAssetParams] = useState({
+            limit: 10,
+            page: 1,
+          })
+          const [filteredAssetOptions, setFilteredAssetOptions] = useState([])
+          const assetOptions = getAssets?.data?.data?.data || []
+          console.log(getAssets, 'getAssets');
+
+          const normalizeLocationFromAsset = (asset) => ({
+            value: asset.location_id ?? asset.location,
+            label: `${asset.location} - ${asset.location_description ?? ''}`,
+            location: String(asset.location),
+            location_description: asset.location_description ?? '',
+            location_id: asset.location_id ?? asset.location,
+            site: asset.site ?? asset.siteid,
+            siteid: asset.siteid,
           })
 
           const handleLocationChange = (val) => {
             if (!val) {
               setFieldValue('location_id', null)
+              setFieldValue('location_description', '')
+              setIsLocationChanged(false)
+              setIsLocationDisabled(false)
+
               setFieldValue('asset_id', null)
+              setFieldValue('asset_description', '')
+              setIsAssetChanged(false)
+              setFilteredAssetOptions([])
               return
             }
-            const formatted = normalizeLocation(val)
+
+            const formatted = normalizeLocationFromAsset(val)
             setFieldValue('location_id', formatted)
             setFieldValue('location_description', formatted.location_description)
             setIsLocationChanged(true)
+            const filteredAssets = assetOptions.filter(
+              (a) => a.location_id === formatted.location_id
+            )
+            setFilteredAssetOptions(filteredAssets)
 
-            if (!isAssetChanged) {
+            if (!isAssetChanged && filteredAssets.length > 0) {
+              const defaultAsset = filteredAssets[0]
+              setFieldValue('asset_id', defaultAsset)
+              setFieldValue('asset_description', defaultAsset.asset_description || '')
+              if (defaultAsset.site) setFieldValue('site_id', defaultAsset.site)
+              setIsAssetChanged(true)
+            } else if (!isAssetChanged) {
               setFieldValue('asset_id', null)
+              setFieldValue('asset_description', '')
             }
           }
 
           const handleAssetChange = (val) => {
-            setFieldValue('asset_id', val)
-
-            // SET asset_description AGAR MASUK KE FORMIK
-            setFieldValue('asset_description', val?.asset_description || '')
-
-            if (val?.site) {
-              setFieldValue('site_id', val.site)
-            }
-
             if (!val) {
+              setFieldValue('asset_id', null)
+              setFieldValue('asset_description', '')
               setFieldValue('site_id', '')
+              setIsAssetChanged(false)
+
               if (!isLocationChanged) {
                 setFieldValue('location_id', null)
                 setIsLocationDisabled(false)
               }
-              setIsAssetChanged(false)
               return
             }
 
+            setFieldValue('asset_id', val)
+            setFieldValue('asset_description', val.asset_description || '')
+
+            const site = val.site ?? val.siteid
+            if (site) setFieldValue('site_id', site)
+
             setIsAssetChanged(true)
 
-            if (!isLocationChanged && val?.location) {
-              const formatted = normalizeLocation(val)
+            if (!isLocationChanged && val.location) {
+              const formatted = normalizeLocationFromAsset(val)
               setFieldValue('location_id', formatted)
               setIsLocationDisabled(true)
-
-              if (isLocationFirst === null) {
-                setIsLocationFirst(false)
-                setFieldValue('is_location_first', false)
-              }
             }
           }
+
+          // AMBIL ASSET LIST DARI getAssets
+          // const { data: assetData } = getAssets()
+
+          // ✅ AMBIL LIST ASSET DARI getAssets
+          // NORMALISASI ASSET JADI ARRAY (ANTI ERROR)
+
+
+          // console.log('getAssets', getAssets)
+          // console.log('assets', assets)
+          // const normalizeLocation = (item) => ({
+          //   value: item.location_id,
+          //   label: `${item.location} - ${item.location_description}`,
+          //   location_id: item.location_id,
+          //   location_description: item.location_description ?? '',
+          //   site: item.site,          // ⬅️ PENTING
+          // })
+
+          // const handleLocationChange = (val) => {
+          //   if (!val) {
+          //     setFieldValue('location_id', null)
+          //     setFieldValue('location_description', '')
+          //     setFieldValue('site_id', '')
+          //     setFieldValue('asset_id', null)
+          //     setFieldValue('asset_description', '')
+          //     return
+          //   }
+
+          //   // SET LOCATION
+          //   setFieldValue('location_id', val)
+          //   setFieldValue('location_description', val.location_description ?? '')
+
+          //   // SET SITE
+          //   setFieldValue('site_id', val.site)
+
+          //   // 🔥 FIX SEBENARNYA ADA DI SINI
+          //   // UBAH PARAMS → HOOK AUTO FETCH
+          //   setAssetParams({
+          //     limit: 10,
+          //     page: 1,
+          //     qSite: val.site, // ⬅️ BUKAN qLocation
+          //   })
+
+          //   // reset asset sebelum load baru
+          //   setFieldValue('asset_id', null)
+          //   setFieldValue('asset_description', '')
+
+          //   setIsLocationChanged(true)
+          // }
+
+
+          // const handleAssetChange = (val) => {
+          //   if (!val) {
+          //     setFieldValue('asset_id', null)
+          //     setFieldValue('asset_description', '')
+          //     setFieldValue('site_id', '')
+          //     if (!isLocationChanged) {
+          //       setFieldValue('location_id', null)
+          //       setIsLocationDisabled(false)
+          //     }
+          //     setIsAssetChanged(false)
+          //     return
+          //   }
+
+          //   // ✅ SET ASSET
+          //   setFieldValue('asset_id', val)
+          //   setFieldValue('asset_description', val?.asset_description || '')
+
+          //   // ✅ SET SITE DARI ASSET
+          //   if (val?.site) {
+          //     setFieldValue('site_id', val.site)
+          //   }
+
+          //   setIsAssetChanged(true)
+
+          //   // 🔥 JIKA ASSET DIPILIH DULU → AUTO ISI LOCATION
+          //   if (!isLocationChanged && val?.location) {
+          //     const formatted = normalizeLocation(val)
+          //     setFieldValue('location_id', formatted)
+          //     setFieldValue('location_description', formatted.location_description)
+          //     setIsLocationDisabled(true)
+
+          //     if (isLocationFirst === null) {
+          //       setIsLocationFirst(false)
+          //       setFieldValue('is_location_first', false)
+          //     }
+          //   }
+          // }
+
 
           return (
             <Form>
@@ -261,8 +377,11 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                       </CFormLabel>
                       <div>
                         <Editor
+                          key={values.detailsummary}
                           name="detailsummary"
-                          value={values?.detailsummary ?? ''}
+                          value={typeof values.detailsummary === 'string'
+                            ? values.detailsummary
+                            : ''}
                           valueKey="detailsummary"
                           labelKey="detailsummary"
                           otherKey={{
@@ -272,7 +391,6 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                           onChange={(val) => setFieldValue('detailsummary', val)}
                           onBlur={() => setFieldTouched('detailsummary', true)}
                           size="md"
-                          isClearable
                         />
                         {errors.detailsummary && touched.detailsummary ? (
                           <div className="text-sm text-[#e55353] mt-1">{errors.detailsummary}</div>
@@ -311,10 +429,9 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                           site: 'site',
                           site_id: 'site_id',
                         }}
+                        options={filteredAssetOptions}
                         onChange={handleAssetChange}
-                        query={{
-                          qLocation: values.location_id?.label || undefined,
-                        }}
+                        query={values.location_id ? { location_id: values.location_id.value } : {}}
                         onBlur={() => setFieldTouched('asset_id')}
                         size="md"
                         as={SelectPagination}
@@ -433,6 +550,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                       <CFormLabel className="text-primary fw-semibold">
                         Asset Site <span className="text-red-main">*</span>
                       </CFormLabel>
+                      {console.log(values, 'sauserbysite')}
                       <Field
                         name="site_id"
                         placeholder="Select Site"

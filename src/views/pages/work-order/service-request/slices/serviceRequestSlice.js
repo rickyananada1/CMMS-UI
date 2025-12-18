@@ -8,6 +8,7 @@ const initialState = {
   selectedServiceRequest: null,
   visiblePopUp: false,
   selectedWoTab: 0,
+  serviceRequestDetailData: [],
 }
 
 export const serviceRequestSlice = createSlice({
@@ -32,6 +33,12 @@ export const serviceRequestSlice = createSlice({
     },
     setSelectedWoTab(state, action) {
       state.selectedWoTab = action.payload
+    },
+    setServiceRequestDetailData(state, action) {
+      state.serviceRequestDetailData = action.payload
+    },
+    setSelectedServiceRequest(state, action) {
+      state.selectedServiceRequest = action.payload
     },
     resetTabs(state) {
       state.selectedWoTab = 0

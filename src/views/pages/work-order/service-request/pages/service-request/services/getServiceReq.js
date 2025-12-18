@@ -2,6 +2,7 @@
 /* prettier-ignore-start */
 import { useMutation } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
+import { useSelector, useDispatch } from 'react-redux'
 import axios from 'src/libs/axios'
 
 const getWoServiceRequest = async ({ id, params, signal } = {}) => {
@@ -14,17 +15,32 @@ const useGetServiceReq = (props) => {
   })
 }
 
-const getWOTracking = async ({ params, signal }) => {
-  console.log(params, 'hahahah')
-  return await axios.get('/work-orders', { params, signal })
-}
+const getWOTracking = async ({ signal }) => {
+  const state = store.getState()
+  const srId = state.serviceRequest?.selectedServiceRequest?.uuid
+  if (!srId) {
+    throw new Error('Service Request ID is missing')
+  }
 
-const useGetWOTracking = ({ config, params }) => {
-  return useQuery({
-    ...config,
-    queryKey: ['work-order-tracking', ...(params ? Object.values(params).filter(Boolean) : [])],
-    queryFn: ({ signal }) => getWOTracking({ params, signal }),
+  return axios.get(`/servicerequestWo/${srId}`, {
+    signal,
   })
 }
 
-export { getWoServiceRequest, useGetServiceReq, useGetWOTracking }
+const useGetTableServiceWO = () => {
+  const srId = useSelector(
+    (state) => state.serviceRequest?.selectedServiceRequest?.uuid
+  )
+  return useQuery({
+    queryKey: ['table-service-wo', srId],
+    queryFn: async ({ signal }) => {
+      return axios.get(`/servicerequestWo/${srId}`, { signal })
+    },
+    enabled: !!srId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  })
+}
+
+export { getWoServiceRequest, useGetServiceReq, useGetTableServiceWO }

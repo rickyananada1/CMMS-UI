@@ -91,10 +91,17 @@ const EditorTiptap = ({
   });
 
   React.useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || "");
-    }
-  }, [value, editor]);
+  if (!editor || !value) return;
+
+  const hasImage = editor.getHTML().includes("<img");
+  const valueHasImage = value.includes("<img");
+
+  // jangan replace content kalau editor sudah ada image
+  if (!hasImage && value !== editor.getHTML()) {
+    editor.commands.setContent(value);
+  }
+}, [value, editor]);
+
 
   return (
     <div className="editor-container">

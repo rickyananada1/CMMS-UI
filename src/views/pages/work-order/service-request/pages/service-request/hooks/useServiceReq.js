@@ -8,25 +8,17 @@ import {
   useGetServiceReq,
   useUpdateServiceReq,
   useDeleteServiceRequest,
-  useGetServiceReqTypes,
-  // useAssetDropdown,
   useGetAssets,
-  // useConfigurationDropdown,
   useGetSites,
-  useGetUser,
   useGetServiceReqs,
   useGetUserSites,
   useGetReportBy,
-  getWoServiceRequests,
-  useGetProfile,
 } from '../services'
 import { useLocation } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 import { useGetListLocation } from 'src/views/pages/locations/pages/location/services'
 import moment from 'moment'
-import { useGetJobPlanDropdown } from 'src/views/pages/job-plan/page/list/services'
-import { useGetPreventiveMaintenanceDropdown } from 'src/views/pages/work-order/preventive-maintenance/pages/list/services'
 import { useGetFrequencySeasonalDetail } from 'src/views/pages/work-order/preventive-maintenance/pages/frequency-seasonal/services'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
 import { useGetFileUploaded } from 'src/views/pages/upload-file/services/getFileUploaded'
@@ -47,11 +39,17 @@ function updateWorkOrderStatuses(currentStatus) {
   const validStatuses = ['QUEUED', 'WAPPR', 'WOCREATED', 'RESOLVED', 'CLOSED', 'CANCEL', 'REVISED', 'NEW'];
 
   if (!validStatuses.includes(currentStatus)) {
-    console.error(`Unknown service request status: ${currentStatus}`);
     return;
   }
+
   work_order_statuses.length = 0;
-  work_order_statuses.push({ value: currentStatus, label: currentStatus });
+
+  validStatuses.forEach(status => {
+    work_order_statuses.push({
+      value: status,
+      label: status,
+    });
+  });
 }
 
 function generateServiceRequest() {
@@ -81,7 +79,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     reportedby: useSelector((state) => state.auth?.user?.display_name),
   }
   const userSite = {
-    site_id: useSelector((state) => state.auth?.user?.site_id),
+    siteid: useSelector((state) => state.auth?.user?.site_id),
     site: useSelector((state) => state.auth?.user?.site),
   }
   const visiblePopUp = useSelector((state) => state.serviceRequest?.visiblePopUp)
@@ -127,9 +125,9 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
     // SITE
     site_id:
-      userSite?.site_id !== null
+      userSite?.siteid !== null
         ? {
-          value: userSite?.site_id,
+          value: userSite?.siteid,
           label: userSite?.site,
         }
         : null,
@@ -160,6 +158,8 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   });
 
   const [oldStatus, setOldStatus] = useState('')
+  const [assetParams, setAssetParams] = useState({})
+
 
   const setSelectedRow = (param) => {
     dispatch(serviceRequestActions.setSelectedServiceReq(param))
@@ -189,6 +189,8 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const getLocations = useGetListLocation()
   const getAssets = useGetAssets()
+  const getAssetsLoc = useGetAssets(assetParams)
+  const { data: assetOptions = [] } = useGetAssets()
   const getUserSite = useGetUserSites({ siteid: siteid })
   const affectedperson = {
     user_id: useSelector((state) => state.auth?.user?.user_id),
@@ -268,7 +270,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     handleModalClose,
     handleFileSelect,
     duplicateFileError,
-  } = useFileUpload({uploadUrl, fetchUrl, mode, files, setFiles, formId})
+  } = useFileUpload({ uploadUrl, fetchUrl, mode, files, setFiles, formId })
 
   const [formDeletedFiles, setFormDeletedFiles] = useState([])
   const [isNewFiles, setIsNewFiles] = useState(false)
@@ -294,7 +296,10 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     if (!getServiceRequestService.data?.data?.data) return
     const data = getServiceRequestService.data.data.data
     setOldStatus(data?.status)
-    updateWorkOrderStatuses(data?.status)
+    // updateWorkOrderStatuses(data?.status)
+    if (data?.status) {
+      updateWorkOrderStatuses(data.status)
+    }
     const row = data[0];
     setFormValue((prev) => ({
       ...prev,
@@ -311,6 +316,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           value: data?.asset_id,
           label: data?.assetnum,
           asset_description: data?.asset_description,
+          site: data?.site, 
         },
       }),
       // ...(data?.reportedby !== null && {
@@ -329,25 +335,25 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           site_code: data.reported
         },
       }),
-      ...(data?.site_id !== null && {
+      ...(data?.siteid && {
         siteid: {
-          value: data?.siteid,
-          label: data?.site,
-          site_code: data.site
+          value: data.siteid,
+          label: data.siteid,
         },
       }),
+
       ...(data?.status !== null && {
         status: {
           value: data?.status,
           label: data?.status,
         },
       }),
-      ...(data?.affectedperson !== null && {
-        affectedperson: {
-          user_id: data?.user_id,
-          display_name: data?.display_name,
-        },
-      }),
+     ...(data?.affectedperson && {
+  affectedperson: {
+    user_id: data?.reportedby, // dipakai buat match valueKey
+    display_name: data?.affectedperson, // LABEL YANG BENAR
+  },
+}),
       ticketid: data?.ticketid,
       // affectedperson: data?.affectedperson,
       description: data?.description,
@@ -395,6 +401,39 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getServiceRequestService.data])
 
+  const serviceRequestDetailData = useSelector(
+    (state) => state.serviceRequest.serviceRequestDetailData
+  )
+
+  const selectedServiceReq = useSelector(
+    (state) => state.serviceRequest?.selectedServiceRequest
+  )
+
+
+  const { mutate: getServiceReq } = useGetServiceReq()
+
+  useEffect(() => {
+    if (!selectedServiceReq) return
+
+    const savedData = localStorage.getItem('serviceRequestDetailData')
+    if (savedData) {
+      // restore dari localStorage
+      dispatch(serviceRequestActions.setServiceRequestDetailData(JSON.parse(savedData)))
+      return
+    }
+
+    if (!serviceRequestDetailData || serviceRequestDetailData.length === 0) {
+      getServiceReq({ id: selectedServiceReq.uuid }, {
+        onSuccess: (data) => {
+          dispatch(serviceRequestActions.setServiceRequestDetailData(data))
+          localStorage.setItem('serviceRequestDetailData', JSON.stringify(data)) // simpan
+        },
+        onError: (err) => console.error(err),
+      })
+    }
+  }, [selectedServiceReq?.uuid])
+
+
   const createServiceRequest = useCreateServiceRequest()
   const updateServiceReq = useUpdateServiceReq()
 
@@ -408,6 +447,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       confirmButtonText: 'Yes! Confirm',
       confirmButtonColor: '#2671D9',
     }).then(async (result) => {
+      setIsLoading(true)
       if (result.isConfirmed) {
         const modifiedFormData = {
           ...values,
@@ -418,7 +458,8 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           assetnum: values?.asset_id?.label ?? null,
           asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
           reportedby: values?.reportedby?.value ? Number(values.reportedby.value) : null,
-          // siteid: values?.site_id?.label ?? null,
+          // siteid: values?.asset_id?.site_id ?? null,
+          siteid: values?.site_id ?? values?.asset_id?.site ?? null,
           glaccount: values?.glaccount || null,
           description: values?.description || "",
           status: values?.status?.value ?? null,
@@ -434,57 +475,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           affecteddate: values?.affecteddate ? moment(values?.affecteddate).toISOString(true) : null,
           is_location_first: values?.is_location_first ?? null,
         };
-
-        // const modifiedFormData = {
-        //   ...values,
-        //   location_id: values?.location_id?.value ?? null,
-        //   assetnum: values?.asset_id?.label ?? null,
-        //   asset_id: values?.asset_id?.value ?? null,
-        //   // reportedby: values?.reportedby?.label
-        //   //   || values?.reportedby?.display_name
-        //   //   || values?.reportedby
-        //   //   || null,
-        //   // reportedby: values?.reportedby?.value
-        //   //   ? Number(values.reportedby.value)
-        //   //   : null,
-        //   // reportedby: values.reportedby ? Number(values.reportedby) : null,
-        //   reportedby: values?.reportedby || null,
-        //   siteid: values?.site_id?.label,
-        //   glaccount: values?.glaccount,
-        //   description: values?.description,
-        //   status: values?.status?.value,
-        //   asset_description: values?.asset_description,
-        //   location: values?.location_id?.location ?? null,
-        //   location_description: values?.location_id?.location_description ?? null,
-        //   detailsummary: values?.detailsummary,
-        //   // display_name: values.reportedby?.label ?? '',
-        //   // affectedperson: values?.user_id?.label ?? '',
-        //   // affectedperson: values?.user_id?.value
-        //   //   ? Number(values.user_id.value)
-        //   //   : null,
-        //   affectedperson: values?.user_id?.value ?? null,
-        //   targetstart: values?.target_start
-        //     ? moment(values?.target_start).toISOString(true)
-        //     : null,
-        //   targetfinish: values?.target_finish
-        //     ? moment(values?.target_finish).toISOString(true)
-        //     : null,
-        //   actualstart: values?.actualstart
-        //     ? moment(values?.actualstart).toISOString(true)
-        //     : null,
-        //   actualfinish: values?.actualfinish
-        //     ? moment(values?.actualfinish).toISOString(true)
-        //     : null,
-        //   reporteddate: values?.reporteddate
-        //     ? moment(values?.reporteddate).toISOString(true)
-        //     : null,
-        //   affecteddate: values?.affected_date
-        //     ? moment(values?.affected_date).toISOString(true)
-        //     : null,
-        //   is_location_first: values?.is_location_first,
-        // }
-
-        console.log("Submit payload:", modifiedFormData);
 
         let woId
         let fileUploadUrl
@@ -502,7 +492,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             const updateRes = await updateServiceReq.mutateAsync({
               data: {
                 ...modifiedFormData,
-                ticketid: selectedRow.uuid,
+                uuid: selectedRow.uuid,
               }
             })
 
@@ -542,7 +532,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             }
           }
 
-
           Notification.fire({
             icon: 'success',
             title: 'Success',
@@ -560,6 +549,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             text: error.response?.data?.message || error.message || 'Something went wrong!',
           })
         } finally {
+          setIsLoading(false)
           formikHelpers.setSubmitting(false)
         }
       }
@@ -768,7 +758,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const { handleDownload: downloadFile } = useFileUpload({
     fieldName: 'files',
     uploadUrl: '',
-    fetchUrl: `/servicerequests/download`,
+    fetchUrl: `/servicerequest/${selectedRow?.uuid}/attachment`,
     mode,
   })
 
@@ -850,6 +840,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     errorMessage,
     formValue,
     selectedRow,
+    serviceRequestDetailData,
     setSelectedRow,
     handleSubmit,
     downloadFile,
@@ -858,6 +849,9 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     // getWorkClassifications,
     getLocations,
     getAssets,
+    getAssetsLoc,
+    setAssetParams,
+    assetOptions,
     getUserSite,
     getReportBy,
     getUserLogin,

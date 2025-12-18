@@ -161,22 +161,6 @@ const ServiceRequestList = () => {
     resetSelectedTaskEtc,
   } = useList()
 
-
-  //   // fetch detail ketika selectedRow berubah
-  //  const { data: detailSR, isLoading: isDetailLoading } = useGetServiceRequestDetail({
-  //     id: selectedRow?.ticketid,
-  //     config: {
-  //       enabled: !!selectedRow?.ticketid, // penting agar tidak fetch undefined
-  //     },
-  //   })
-
-  //   useEffect(() => {
-  //     if (detailSR) {
-  //       // simpan data lengkap ke Redux
-  //       dispatch(serviceRequestActions.setselectedServiceReq(detailSR.data))
-  //     }
-  //   }, [detailSR, dispatch])
-
   return (
     <div>
       <div className="bg-white p-4 rounded">
@@ -205,6 +189,7 @@ const ServiceRequestList = () => {
           </button>
         </div>
         <Table
+          storeKey="service-request-list"
           tableRef={tableRef}
           columns={columns}
           apiController={useGetServiceRequest}
