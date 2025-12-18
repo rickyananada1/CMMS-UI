@@ -81,85 +81,58 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
           touched,
         }) => {
 
-          const [assetParams, setAssetParams] = useState({
-            limit: 10,
-            page: 1,
-          })
-          const [filteredAssetOptions, setFilteredAssetOptions] = useState([])
-          const assetOptions = getAssets?.data?.data?.data || []
-          console.log(getAssets, 'getAssets');
-
-          const normalizeLocationFromAsset = (asset) => ({
-            value: asset.location_id ?? asset.location,
-            label: `${asset.location} - ${asset.location_description ?? ''}`,
-            location: String(asset.location),
-            location_description: asset.location_description ?? '',
-            location_id: asset.location_id ?? asset.location,
-            site: asset.site ?? asset.siteid,
-            siteid: asset.siteid,
-          })
-
           const handleLocationChange = (val) => {
+            setFieldValue('location_id', val)
+
             if (!val) {
-              setFieldValue('location_id', null)
-              setFieldValue('location_description', '')
+              setFieldValue('asset_id', null)
+              setFieldValue('is_location_first', null)
               setIsLocationChanged(false)
+              setIsAssetChanged(false)
+              setIsLocationDisabled(false)
+              setIsLocationFirst(null)
+            } else {
+              setIsLocationChanged(true)
               setIsLocationDisabled(false)
 
-              setFieldValue('asset_id', null)
-              setFieldValue('asset_description', '')
-              setIsAssetChanged(false)
-              setFilteredAssetOptions([])
-              return
-            }
+              if (isLocationFirst === null) {
+                setIsLocationFirst(true)
+                setFieldValue('is_location_first', true)
+              }
 
-            const formatted = normalizeLocationFromAsset(val)
-            setFieldValue('location_id', formatted)
-            setFieldValue('location_description', formatted.location_description)
-            setIsLocationChanged(true)
-            const filteredAssets = assetOptions.filter(
-              (a) => a.location_id === formatted.location_id
-            )
-            setFilteredAssetOptions(filteredAssets)
-
-            if (!isAssetChanged && filteredAssets.length > 0) {
-              const defaultAsset = filteredAssets[0]
-              setFieldValue('asset_id', defaultAsset)
-              setFieldValue('asset_description', defaultAsset.asset_description || '')
-              if (defaultAsset.site) setFieldValue('site_id', defaultAsset.site)
-              setIsAssetChanged(true)
-            } else if (!isAssetChanged) {
-              setFieldValue('asset_id', null)
-              setFieldValue('asset_description', '')
+              if (!isAssetChanged) {
+                setFieldValue('asset_id', null)
+              }
             }
           }
 
           const handleAssetChange = (val) => {
-            if (!val) {
-              setFieldValue('asset_id', null)
-              setFieldValue('asset_description', '')
-              setFieldValue('site_id', '')
-              setIsAssetChanged(false)
+            setFieldValue('asset_id', val)
 
+            if (!val) {
               if (!isLocationChanged) {
                 setFieldValue('location_id', null)
+                setFieldValue('is_location_first', null)
                 setIsLocationDisabled(false)
               }
-              return
-            }
+              setIsAssetChanged(false)
+              setIsLocationFirst(null)
+            } else {
+              setIsAssetChanged(true)
 
-            setFieldValue('asset_id', val)
-            setFieldValue('asset_description', val.asset_description || '')
+              if (!isLocationChanged) {
+                setIsLocationDisabled(true)
+                setFieldValue('location_id', {
+                  value: val?.location_id,
+                  label: val?.location,
+                  location_description: val?.location_description,
+                })
 
-            const site = val.site ?? val.siteid
-            if (site) setFieldValue('site_id', site)
-
-            setIsAssetChanged(true)
-
-            if (!isLocationChanged && val.location) {
-              const formatted = normalizeLocationFromAsset(val)
-              setFieldValue('location_id', formatted)
-              setIsLocationDisabled(true)
+                if (isLocationFirst === null) {
+                  setIsLocationFirst(false)
+                  setFieldValue('is_location_first', false)
+                }
+              }
             }
           }
 
@@ -385,7 +358,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                           valueKey="detailsummary"
                           labelKey="detailsummary"
                           otherKey={{
-                            plan_description: 'detailsummary',
+                            detailsummary: 'detailsummary',
                           }}
                           invalid={touched.detailsummary && errors.detailsummary}
                           onChange={(val) => setFieldValue('detailsummary', val)}
@@ -429,9 +402,10 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                           site: 'site',
                           site_id: 'site_id',
                         }}
-                        options={filteredAssetOptions}
                         onChange={handleAssetChange}
-                        query={values.location_id ? { location_id: values.location_id.value } : {}}
+                        query={{
+                          qLocation: values.location_id?.label || undefined,
+                        }}
                         onBlur={() => setFieldTouched('asset_id')}
                         size="md"
                         as={SelectPagination}
@@ -473,20 +447,18 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                         name="location_id"
                         placeholder="Select Location"
                         apiController={getLocations}
-                        value={values?.location_id ?? null}
-                        valueKey="location"
-                        labelKey={(item) => `${item.location} - ${item.location_description}`}
+                        value={values?.location_id}
+                        valueKey="location_id"
+                        labelKey="location"
                         searchKey="qLocation"
                         otherKey={{
                           asset_id: 'asset_id',
                           asset_num: 'asset_num',
                           asset_description: 'asset_description',
-                          location: 'location',
                           location_description: 'location_description',
                         }}
                         onChange={handleLocationChange}
-                        labelFormat={(item) =>
-                          `${item?.location_id ?? ''} - ${item?.location_description ?? ''}`}
+                        onBlur={() => setFieldTouched('location_id')}
                         size="md"
                         as={SelectPagination}
                         isClearable
@@ -500,7 +472,11 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                       <Field
                         name="location_description"
                         placeholder="No Description"
-                        value={values?.location_id?.location_description ?? ''}
+                        value={
+                          values?.location_id?.location_description
+                            ? values?.location_id?.location_description
+                            : ''
+                        }
                         onChange={handleChange}
                         size="md"
                         disabled
@@ -555,8 +531,6 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                         name="site_id"
                         placeholder="Select Site"
                         value={values?.asset_id?.site || ''}
-                        isAllData
-                        handleChange
                         size="md"
                         disabled
                         as={CFormInput}
@@ -698,7 +672,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                   <CRow className="mb-3">
                     <div className="flex items-center mt-2 justify-between -mx-2">
                       <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
-                        Request Submitted
+                        Request Submited
                       </p>
                       <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
                     </div>

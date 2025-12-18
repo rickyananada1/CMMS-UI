@@ -303,7 +303,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     const row = data[0];
     setFormValue((prev) => ({
       ...prev,
-      ...(data?.location && {
+      ...(data?.location_id && {
         location_id: {
           value: data.location_id ?? data.location,
           label: `${data.location} - ${data.location_description ?? ''}`,
@@ -438,6 +438,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const updateServiceReq = useUpdateServiceReq()
 
   const handleSubmit = async (values, formikHelpers) => {
+    console.log('FINAL SUBMIT:', values.site_id, values.asset_id?.site)
     Notification.fire({
       icon: 'info',
       text: 'Are you sure to submit ?',
@@ -451,7 +452,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       if (result.isConfirmed) {
         const modifiedFormData = {
           ...values,
-          location_id: values?.location_id?.value ?? null,
+          location_id: values?.location_id?.value,
           location: values?.location_id?.location ?? null,
           location_description: values?.location_id?.location_description ?? null,
           asset_id: values?.asset_id?.value ?? null,
@@ -459,7 +460,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
           reportedby: values?.reportedby?.value ? Number(values.reportedby.value) : null,
           // siteid: values?.asset_id?.site_id ?? null,
-          siteid: values?.site_id ?? values?.asset_id?.site ?? null,
+          siteid: values.site_id || values?.asset_id?.site || null,
           glaccount: values?.glaccount || null,
           description: values?.description || "",
           status: values?.status?.value ?? null,

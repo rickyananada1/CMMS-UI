@@ -971,17 +971,20 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                       <CFormLabel className="text-primary fw-semibold">
                         Service request <span className="text-red-main"></span>
                       </CFormLabel>
+                      {console.log(values, 'ijijiji')}
                       <Field
                         name="ticketid"
                         placeholder="Select Ticket"
                         apiController={getUserSites}
                         value={values?.ticketid}
                         valueKey="uuid"
+                        searchKey="qTicketId"
                         labelKey="ticketid"
                         otherKey={{
-                          summary: 'description',
+                          description: 'description',
                         }}
                         onChange={(val) => {
+                          console.log('SELECTED:', val)
                           setFieldValue('ticketid', val)
                           setFieldValue('summary', val?.description || '')
                         }}
@@ -998,8 +1001,6 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                       <Field
                         name="summary"
                         placeholder="No Description"
-                        value={values?.summary || ''}
-                        onChange={handleChange}
                         size="md"
                         disabled
                         as={CFormTextarea}

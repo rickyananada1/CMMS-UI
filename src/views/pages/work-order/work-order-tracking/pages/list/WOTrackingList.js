@@ -39,15 +39,15 @@ const columns = [
     accessorKey: 'work_type',
     qName: 'qWorkType',
   },
-  {
-    header: 'Assign Person',
-    accessorKey: 'assign_person',
-    qName: 'qAssignPerson',
-    size: 150,
-    cell: (row) => (
-      <div style={{ width: `${row?.column?.getSize()}px` }}>{row.getValue() || '-'}</div>
-    ),
-  },
+  // {
+  //   header: 'Assign Person',
+  //   accessorKey: 'assign_person',
+  //   qName: 'qAssignPerson',
+  //   size: 150,
+  //   cell: (row) => (
+  //     <div style={{ width: `${row?.column?.getSize()}px` }}>{row.getValue() || '-'}</div>
+  //   ),
+  // },
   {
     header: 'Asset',
     accessorKey: 'asset_num',

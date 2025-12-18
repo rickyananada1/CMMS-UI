@@ -76,11 +76,16 @@ function generateTicketEcp() {
   return prefix + randomString
 }
 
-const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
+const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   const Notification = withReactContent(Swal)
   const dispatch = useDispatch()
   const selectedRow = useSelector((state) => state.ticketEcp?.selectedTicketEcp)
   const userOrgId = useSelector((state) => state.auth?.user?.organization_id)
+  const userLogin = useSelector((state) => state.auth?.user)
+  const phone_number = userLogin?.phone_number
+  const email = userLogin?.email
+  const organization_name = userLogin?.organization_name
+
   const userSite = {
     site_id: useSelector((state) => state.auth?.user?.site_id),
     site: useSelector((state) => state.auth?.user?.site),
@@ -144,11 +149,18 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
           label: repId?.reportedby,
         }
         : null,
-    display_name: null,
+    display_name:
+      repId?.user_id !== null
+        ? {
+          value: repId?.user_id,
+          label: repId?.reportedby,
+        }
+        : null,
     reporteddate: null,
-    phone_number: null,
-    email: null,
     organization_id: null,
+    reportedphone: phone_number ?? null,
+    reportedemail: email ?? null,
+    organization: organization_name ?? null,
   })
   const [oldStatus, setOldStatus] = useState('')
 
@@ -172,6 +184,17 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
       return
     }
   }
+
+  useEffect(() => {
+    if (!formik || !userLogin) return
+
+    formik.setFieldValue('email', userLogin.email || '')
+    formik.setFieldValue('reportedphone', userLogin.phone_number || '')
+    formik.setFieldValue(
+      'organization_name',
+      userLogin.organization_name || ''
+    )
+  }, [userLogin])
 
   useEffect(() => {
     visiblePopUp && mode === 'Read' && handleDeleteParent()
@@ -334,10 +357,13 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
       display_name: data?.display_name,
 
       ticekt_ecp_attachment_url: data?.ticekt_ecp_attachment_url,
-
+      reportedphone: data?.phone_number ?? prev.phone_number ?? null,
+      reportedemail: data?.email ?? prev.email ?? null,
+      organization:
+        data?.organization_name ?? prev.organization_id ?? organization_name ?? null,
       reporteddate: data?.reporteddate
-        ? moment(data?.reporteddate).format('YYYY-MM-DDTHH:mm')
-        : moment().format("YYYY-MM-DDTHH:mm"),
+        ? moment(data.reporteddate).format('YYYY-MM-DDTHH:mm')
+        : prev.reporteddate || moment().format('YYYY-MM-DDTHH:mm'),
     }))
 
     setIsLocationFirst(data?.is_location_first)
@@ -376,12 +402,15 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
           asset_id: values?.asset_id?.value ?? null,
           assetnum: values?.asset_id?.label ?? null,
           asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
-          reportedby: values?.reportedby?.value
-            ? String(values.reportedby.value)
+          reportedby: values?.reportedby?.label
+            ? String(values.reportedby.label)
             : null,
-
-          phone_number: values?.phone_number || "",
-          email: values?.email || "",
+          display_name: values?.reportedby?.label
+            ? String(values.reportedby.label)
+            : null,
+          reportedemail: values?.email || '',
+          reportedphone: values?.reportedphone || '',
+          organization_name: values?.organization_name || '',
           siteid:
             values?.site_id?.value
               ? String(values.site_id.value)
@@ -391,8 +420,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
           description: values?.description || "",
           status: values?.status?.value ?? null,
           detailsummary: values?.detailsummary || "",
-          organization_id: values?.organization_id || "",
-          organization: values?.organization || "",
+          // organization_id: userOrgId || "",
           reportdate: values?.reportdate
             ? moment(values.reportdate).format('YYYY-MM-DD')
             : moment().format('YYYY-MM-DD'),
@@ -779,6 +807,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible }) => {
     handleRetryUpload,
     handleOK,
     isNewFiles,
+    formik,
   }
 }
 
