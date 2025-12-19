@@ -115,8 +115,8 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
     // LOCATION
     location_id: null,        // select
-    location: "",             // string
-    location_description: "", // textarea
+    // location: "",             // string
+    // location_description: "", // textarea
 
     // ASSET
     asset_id: null,           // select
@@ -303,12 +303,12 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     const row = data[0];
     setFormValue((prev) => ({
       ...prev,
-      ...(data?.location_id && {
+      ...(data?.location_id !== null && {
         location_id: {
-          value: data.location_id ?? data.location,
-          label: `${data.location} - ${data.location_description ?? ''}`,
-          location: data.location,
-          location_description: data.location_description ?? '',
+          value: data.location_id,
+          label: data?.location,
+          // location: data.location,
+          location_description: data?.location_description,
         },
       }),
       ...(data?.asset_id !== null && {
@@ -359,7 +359,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       description: data?.description,
       detailsummary: data?.detailsummary,
       asset_description: data?.asset_description,
-      location_description: data?.location_description,
+      // location_description: data?.location_description,
       display_name: data?.display_name,
       glaccount: data?.glaccount,
 
@@ -438,7 +438,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const updateServiceReq = useUpdateServiceReq()
 
   const handleSubmit = async (values, formikHelpers) => {
-    console.log('FINAL SUBMIT:', values.site_id, values.asset_id?.site)
+    console.log('FINAL SUBMIT:', values)
     Notification.fire({
       icon: 'info',
       text: 'Are you sure to submit ?',
@@ -453,8 +453,9 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
         const modifiedFormData = {
           ...values,
           location_id: values?.location_id?.value,
-          location: values?.location_id?.location ?? null,
-          location_description: values?.location_id?.location_description ?? null,
+          // location: values.location_id?.value?.toString || "",
+          // location: values?.location_id?.location ?? null,
+          // location_description: values?.location_id?.location_description ?? null,
           asset_id: values?.asset_id?.value ?? null,
           assetnum: values?.asset_id?.label ?? null,
           asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
