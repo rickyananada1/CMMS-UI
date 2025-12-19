@@ -321,7 +321,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex, formik }) => {
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Asset Description <span className="text-red-main">*</span>
+                        Asset Description
                       </CFormLabel>
                       <Field
                         name="asset_description"
@@ -336,9 +336,9 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex, formik }) => {
                         disabled
                         as={CFormTextarea}
                       />
-                      {errors.asset_description && touched.asset_description ? (
+                      {/* {errors.asset_description && touched.asset_description ? (
                         <div className="text-sm text-[#e55353] mt-1">{errors.asset_description}</div>
-                      ) : null}
+                      ) : null} */}
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">

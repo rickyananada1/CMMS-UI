@@ -4,7 +4,7 @@ const ticketEcpSchema = Yup.object().shape({
   ticketid: Yup.string().required('Ticket ECP is required'),
   description: Yup.string().required('Summary is required'),
   status: Yup.object().required('Status is Required'),
-  site_id: Yup.string().required('Site is required'),
+  // site_id: Yup.string().required('Site is required'),
   organization: Yup.string().required('Organization is required'),
   reportedemail: Yup.string().required('Email is required'),
   reportedphone: Yup.string().required('Phone Number is required'),
@@ -24,7 +24,7 @@ const ticketEcpSchema = Yup.object().shape({
         return !!value?.value || !!assetSelected?.value
       },
     ),
-  asset_description: Yup.string().required('Asset Description Date is required'),
+  // asset_description: Yup.string().required('Asset Description Date is required'),
   asset_id: Yup.object()
     .nullable()
     .test('asset-required', 'Asset is required unless a Location is selected.', function (value) {
