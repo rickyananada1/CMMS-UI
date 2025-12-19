@@ -51,9 +51,9 @@ const AssetsDetail = ({ mode, setAction, setTabIndex }) => {
                   <span className="font-semibold">{data.asset_description ?? '-'}</span>
                 </div>
                 <div className="mb-3">
-                  <label className="text-neutral-text-field">KKS Number</label>
+                  <label className="text-neutral-text-field">Nomor Induk Asset (NIA)</label>
                   <br />
-                  <span className="font-semibold">{data.kks_number ?? '-'}</span>
+                  <span className="font-semibold">02GARTRAFO20050341100000000001</span>
                 </div>
                 <div className="mb-3">
                   <label className="text-neutral-text-field">Existing Code</label>
@@ -66,9 +66,9 @@ const AssetsDetail = ({ mode, setAction, setTabIndex }) => {
                   <StatusComponent status={data.status} />
                 </div>
                 <div className="mb-3">
-                  <label className="text-neutral-text-field">Site</label>
+                  <label className="text-neutral-text-field">KKS Number</label>
                   <br />
-                  <span className="font-semibold">{data.site ?? '-'}</span>
+                  <span className="font-semibold">{data.kks_number ?? '-'}</span>
                 </div>
                 <div className="mb-3">
                   <label className="text-neutral-text-field">Type</label>
@@ -79,6 +79,11 @@ const AssetsDetail = ({ mode, setAction, setTabIndex }) => {
                   <label className="text-neutral-text-field">Asset Template</label>
                   <br />
                   <span className="font-semibold">{data.asset_template ?? '-'}</span>
+                </div>
+                <div className="mb-3">
+                  <label className="text-neutral-text-field">Site</label>
+                  <br />
+                  <span className="font-semibold">{data.site ?? '-'}</span>
                 </div>
               </div>
               <div className="flex items-center mt-2 justify-between">
