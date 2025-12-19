@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore-start */
-import React, { useState }  from 'react'
+import React, { useState } from 'react'
 import {
   CContainer,
   CFormLabel,
@@ -24,7 +24,7 @@ import InputFile from 'src/components/elements/input/InputFile'
 import UploadSummaryModal from 'src/views/pages/upload-file/components/UploadSummaryModal'
 import Editor from '../../../../../../../src/components/editor/EditorTiptap'
 
-const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
+const TicketEcpForm = ({ mode, setAction, setTabIndex, formik }) => {
   const {
     formValue,
     isLoading,
@@ -78,81 +78,58 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
           values,
           touched,
         }) => {
-          const [filteredAssetOptions, setFilteredAssetOptions] = useState([])
-          const assetOptions = getAssets?.data?.data?.data || []
-          console.log(getAssets, 'getAssets');
-
-          const normalizeLocationFromAsset = (asset) => ({
-            value: asset.location_id ?? asset.location,
-            label: `${asset.location} - ${asset.location_description ?? ''}`,
-            location: String(asset.location),
-            location_description: asset.location_description ?? '',
-            location_id: asset.location_id ?? asset.location,
-            site: asset.site ?? asset.siteid,
-            siteid: asset.siteid,
-          })
-
           const handleLocationChange = (val) => {
+            setFieldValue('location_id', val)
+
             if (!val) {
-              setFieldValue('location_id', null)
-              setFieldValue('location_description', '')
+              setFieldValue('asset_id', null)
+              setFieldValue('is_location_first', null)
               setIsLocationChanged(false)
+              setIsAssetChanged(false)
+              setIsLocationDisabled(false)
+              setIsLocationFirst(null)
+            } else {
+              setIsLocationChanged(true)
               setIsLocationDisabled(false)
 
-              setFieldValue('asset_id', null)
-              setFieldValue('asset_description', '')
-              setIsAssetChanged(false)
-              setFilteredAssetOptions([])
-              return
-            }
+              if (isLocationFirst === null) {
+                setIsLocationFirst(true)
+                setFieldValue('is_location_first', true)
+              }
 
-            const formatted = normalizeLocationFromAsset(val)
-            setFieldValue('location_id', formatted)
-            setFieldValue('location_description', formatted.location_description)
-            setIsLocationChanged(true)
-            const filteredAssets = assetOptions.filter(
-              (a) => a.location_id === formatted.location_id
-            )
-            setFilteredAssetOptions(filteredAssets)
-
-            if (!isAssetChanged && filteredAssets.length > 0) {
-              const defaultAsset = filteredAssets[0]
-              setFieldValue('asset_id', defaultAsset)
-              setFieldValue('asset_description', defaultAsset.asset_description || '')
-              if (defaultAsset.site) setFieldValue('site_id', defaultAsset.site)
-              setIsAssetChanged(true)
-            } else if (!isAssetChanged) {
-              setFieldValue('asset_id', null)
-              setFieldValue('asset_description', '')
+              if (!isAssetChanged) {
+                setFieldValue('asset_id', null)
+              }
             }
           }
 
           const handleAssetChange = (val) => {
-            if (!val) {
-              setFieldValue('asset_id', null)
-              setFieldValue('asset_description', '')
-              setFieldValue('site_id', '')
-              setIsAssetChanged(false)
+            setFieldValue('asset_id', val)
 
+            if (!val) {
               if (!isLocationChanged) {
                 setFieldValue('location_id', null)
+                setFieldValue('is_location_first', null)
                 setIsLocationDisabled(false)
               }
-              return
-            }
+              setIsAssetChanged(false)
+              setIsLocationFirst(null)
+            } else {
+              setIsAssetChanged(true)
 
-            setFieldValue('asset_id', val)
-            setFieldValue('asset_description', val.asset_description || '')
+              if (!isLocationChanged) {
+                setIsLocationDisabled(true)
+                setFieldValue('location_id', {
+                  value: val?.location_id,
+                  label: val?.location,
+                  location_description: val?.location_description,
+                })
 
-            const site = val.site ?? val.siteid
-            if (site) setFieldValue('site_id', site)
-
-            setIsAssetChanged(true)
-
-            if (!isLocationChanged && val.location) {
-              const formatted = normalizeLocationFromAsset(val)
-              setFieldValue('location_id', formatted)
-              setIsLocationDisabled(true)
+                if (isLocationFirst === null) {
+                  setIsLocationFirst(false)
+                  setFieldValue('is_location_first', false)
+                }
+              }
             }
           }
 
@@ -214,7 +191,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Status ECP
+                        Status ECP <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="status"
@@ -230,6 +207,9 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                         options={ticket_ecp_statuses}
                         isLocalSearch
                       />
+                      {errors.status && touched.status ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.status}</div>
+                      ) : null}
                     </CCol>
                     <CCol>
                       <div className="flex-row">
@@ -245,9 +225,6 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                         uploadFiles={uploadFiles}
                         {...uploadModalProps}
                       />
-                      {errors && errors.data?.attachment && touched && touched.data?.attachment ? (
-                        <div className="text-sm text-[#b03434] mt-1">{errors.data.attachment}</div>
-                      ) : null}
                     </CCol>
                     {/* <CCol>
                     <div className="flex-row">
@@ -282,17 +259,20 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                       <div>
                         <Editor
                           name="detailsummary"
-                          value={values?.detailsummary ?? ''}
+                          value={typeof values.detailsummary === 'string'
+                            ? values.detailsummary
+                            : ''}
                           valueKey="detailsummary"
                           labelKey="detailsummary"
                           otherKey={{
                             description: 'detailsummary',
                           }}
                           invalid={touched.detailsummary && errors.detailsummary}
-                          onChange={(val) => setFieldValue('detailsummary', val)}
+                          onChange={(val) => {
+                            setFieldValue('detailsummary', val ?? '')
+                          }}
                           onBlur={() => setFieldTouched('detailsummary', true)}
                           size="md"
-                          isClearable
                         />
                         {errors.detailsummary && touched.detailsummary ? (
                           <div className="text-sm text-[#e55353] mt-1">{errors.detailsummary}</div>
@@ -341,7 +321,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Asset Description
+                        Asset Description <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="asset_description"
@@ -356,6 +336,9 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                         disabled
                         as={CFormTextarea}
                       />
+                      {errors.asset_description && touched.asset_description ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.asset_description}</div>
+                      ) : null}
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
@@ -370,34 +353,39 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                         name="location_id"
                         placeholder="Select Location"
                         apiController={getLocations}
-                        value={values?.location_id ?? null}
-                        valueKey="location"
-                        labelKey={(item) => `${item.location} - ${item.location_description}`}
+                        value={values?.location_id}
+                        valueKey="location_id"
+                        labelKey="location"
                         searchKey="qLocation"
                         otherKey={{
                           asset_id: 'asset_id',
                           asset_num: 'asset_num',
                           asset_description: 'asset_description',
-                          location: 'location',
                           location_description: 'location_description',
                         }}
                         onChange={handleLocationChange}
-                        labelFormat={(item) =>
-                          `${item?.location_id ?? ''} - ${item?.location_description ?? ''}`}
+                        onBlur={() => setFieldTouched('location_id')}
                         size="md"
                         as={SelectPagination}
                         isClearable
                         disabled={disableEdit || isLocationDisabled}
                       />
+                      {errors.location_id && touched.location_id ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.location_id}</div>
+                      ) : null}
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Location Description
+                        Location Description <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="location_description"
                         placeholder="No Description"
-                        value={values?.location_id?.location_description ?? ''}
+                        value={
+                          values?.location_id?.location_description
+                            ? values?.location_id?.location_description
+                            : ''
+                        }
                         onChange={handleChange}
                         size="md"
                         disabled
@@ -408,16 +396,16 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                   <CRow className="mb-3">
                     <div className="flex items-center mt-2 justify-between -mx-2">
                       <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
-                        Request Submitted
+                        Request Submited
                       </p>
                       <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
                     </div>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Reported By
+                        Reported By <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
-                        name="reportedby"
+                        name="display_name"
                         placeholder={values?.reportedby?.label || "Select Reported"}
                         apiController={getReportBy}
                         value={values?.reportedby?.label || ""}
@@ -427,39 +415,45 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                         as={CFormInput}
                         disabled
                       />
+                      {errors.reportedby && touched.reportedby ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.reportedby}</div>
+                      ) : null}
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
-                        Reported Date
+                        Reported Date <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
                         name="reporteddate"
                         placeholder="Choose Scheduled Start"
-                        size="md"
-                        min={moment().format('YYYY-MM-DDm')}
-                        value={values?.reporteddate}
                         as={CFormInput}
                         type="date"
+                        min={moment().format('YYYY-MM-DD')}
+                        value={
+                          values?.reporteddate
+                            ? moment(values.reporteddate).format('YYYY-MM-DD')
+                            : moment().format('YYYY-MM-DD')
+                        }
                         disabled
+                        size="md"
                       />
+                      {/* {errors.reporteddate && touched.reporteddate ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.reporteddate}</div>
+                      ) : null} */}
                     </CCol>
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
                         Reported Phone <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
-                        name="phone_number"
+                        name="reportedphone"
                         placeholder="Enter Reported Phone"
-                        valueKey="user_id"
-                        labelKey="display_name"
-                        value={values?.phone_number}
                         size="md"
-                        onBlur={() => setFieldTouched('phone_number')}
                         as={CFormInput}
                         disabled
                       />
-                      {errors.affectedperson && touched.affectedperson ? (
-                        <div className="text-sm text-[#e55353] mt-1">{errors.affectedperson}</div>
+                      {errors.phone_number && touched.phone_number ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.phone_number}</div>
                       ) : null}
                     </CCol>
                     <CCol>
@@ -467,40 +461,32 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                         Reported E-mail <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
-                        name="email"
+                        name="reportedemail"
                         placeholder="Enter Reported E-mail"
-                        valueKey="email"
-                        labelKey="email"
-                        value={values?.email}
                         size="md"
-                        onBlur={() => setFieldTouched('email')}
-                        onChange={(val) => {
-                          setFieldValue(`email`, val)
-                        }}
                         as={CFormInput}
                         disabled
                       />
-                      {errors.affectedperson && touched.affectedperson ? (
-                        <div className="text-sm text-[#e55353] mt-1">{errors.affectedperson}</div>
+                      {errors.email && touched.email ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.email}</div>
                       ) : null}
                     </CCol>
                   </CRow>
                   <CRow className="mb-3">
                     <CCol md={3}>
                       <CFormLabel className="text-primary fw-semibold">
-                        Organization
+                        Organization <span className="text-red-main">*</span>
                       </CFormLabel>
-                      {console.log(values, 'hahah')}
                       <Field
                         name="organization"
-                        placeholder={values?.organization_id || "Enter Organization"}
-                        value={values?.organization_id || ""}
-                        valueKey="value"
-                        labelKey="label"
+                        placeholder={values?.organization || "Enter Organization"}
                         size="md"
                         as={CFormInput}
                         disabled
                       />
+                      {errors.organization && touched.organization ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.organization}</div>
+                      ) : null}
                     </CCol>
                     <CCol md={3}>
                       <CFormLabel className="text-primary fw-semibold">
@@ -509,13 +495,14 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex }) => {
                       <Field
                         name="site_id"
                         placeholder="Enter Site"
-                        value={values?.site_id?.label || ''}
-                        isAllData
-                        handleChange
+                        value={values?.asset_id?.site || ''}
                         size="md"
                         disabled
                         as={CFormInput}
                       />
+                      {errors.site_id && touched.site_id ? (
+                        <div className="text-sm text-[#e55353] mt-1">{errors.site_id}</div>
+                      ) : null}
                     </CCol>
                   </CRow>
                 </CContainer>

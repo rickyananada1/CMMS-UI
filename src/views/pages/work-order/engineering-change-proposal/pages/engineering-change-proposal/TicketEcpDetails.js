@@ -112,7 +112,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
           </CRow>
           <div className="flex items-center mt-2 justify-between -mx-2">
             <p className="mt-2 text-base text-neutral-text-field text-nowrap font-normal">
-              Request Submitted
+              Request Submited
             </p>
             <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
           </div>

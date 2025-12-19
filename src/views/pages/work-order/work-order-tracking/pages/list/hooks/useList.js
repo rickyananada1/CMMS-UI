@@ -63,7 +63,7 @@ const useList = () => {
           'location',
           'location_description',
           'work_type',
-          'assign_person',
+          // 'assign_person',
           'asset_num',
           'asset_desc',
           'status',
