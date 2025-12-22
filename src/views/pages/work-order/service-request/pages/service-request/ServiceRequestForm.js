@@ -83,6 +83,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
 
           const handleLocationChange = (val) => {
             setFieldValue('location_id', val)
+            setFieldValue('location', val?.label || '')
 
             if (!val) {
               setFieldValue('asset_id', null)
@@ -449,7 +450,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                         apiController={getLocations}
                         value={values?.location_id}
                         valueKey="location_id"
-                        labelKey="location"
+                        labelKey="location_id"
                         searchKey="qLocation"
                         otherKey={{
                           asset_id: 'asset_id',
