@@ -133,7 +133,7 @@ const columns = [
   },
   {
     header: 'Location',
-    accessorKey: 'location',
+    accessorKey: 'location_id',
     qName: 'qLocation',
     size: 250,
     cell: (row) => (

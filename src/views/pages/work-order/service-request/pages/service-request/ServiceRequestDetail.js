@@ -103,7 +103,7 @@ const ServiceRequestDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
             <CCol>
               <label className="text-neutral-text-field">Location</label>
               <br />
-              <span className="font-semibold">{data?.location ?? '-'}</span>
+              <span className="font-semibold">{data?.location_id ?? '-'}</span>
             </CCol>
             <CCol>
               <label className="text-neutral-text-field">Location Description</label>
