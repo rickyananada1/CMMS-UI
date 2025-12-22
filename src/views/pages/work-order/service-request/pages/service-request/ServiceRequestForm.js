@@ -83,6 +83,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
 
           const handleLocationChange = (val) => {
             setFieldValue('location_id', val)
+            setFieldValue('location', val?.label || '')
 
             if (!val) {
               setFieldValue('asset_id', null)
@@ -135,95 +136,6 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
               }
             }
           }
-
-          // AMBIL ASSET LIST DARI getAssets
-          // const { data: assetData } = getAssets()
-
-          // ✅ AMBIL LIST ASSET DARI getAssets
-          // NORMALISASI ASSET JADI ARRAY (ANTI ERROR)
-
-
-          // console.log('getAssets', getAssets)
-          // console.log('assets', assets)
-          // const normalizeLocation = (item) => ({
-          //   value: item.location_id,
-          //   label: `${item.location} - ${item.location_description}`,
-          //   location_id: item.location_id,
-          //   location_description: item.location_description ?? '',
-          //   site: item.site,          // ⬅️ PENTING
-          // })
-
-          // const handleLocationChange = (val) => {
-          //   if (!val) {
-          //     setFieldValue('location_id', null)
-          //     setFieldValue('location_description', '')
-          //     setFieldValue('site_id', '')
-          //     setFieldValue('asset_id', null)
-          //     setFieldValue('asset_description', '')
-          //     return
-          //   }
-
-          //   // SET LOCATION
-          //   setFieldValue('location_id', val)
-          //   setFieldValue('location_description', val.location_description ?? '')
-
-          //   // SET SITE
-          //   setFieldValue('site_id', val.site)
-
-          //   // 🔥 FIX SEBENARNYA ADA DI SINI
-          //   // UBAH PARAMS → HOOK AUTO FETCH
-          //   setAssetParams({
-          //     limit: 10,
-          //     page: 1,
-          //     qSite: val.site, // ⬅️ BUKAN qLocation
-          //   })
-
-          //   // reset asset sebelum load baru
-          //   setFieldValue('asset_id', null)
-          //   setFieldValue('asset_description', '')
-
-          //   setIsLocationChanged(true)
-          // }
-
-
-          // const handleAssetChange = (val) => {
-          //   if (!val) {
-          //     setFieldValue('asset_id', null)
-          //     setFieldValue('asset_description', '')
-          //     setFieldValue('site_id', '')
-          //     if (!isLocationChanged) {
-          //       setFieldValue('location_id', null)
-          //       setIsLocationDisabled(false)
-          //     }
-          //     setIsAssetChanged(false)
-          //     return
-          //   }
-
-          //   // ✅ SET ASSET
-          //   setFieldValue('asset_id', val)
-          //   setFieldValue('asset_description', val?.asset_description || '')
-
-          //   // ✅ SET SITE DARI ASSET
-          //   if (val?.site) {
-          //     setFieldValue('site_id', val.site)
-          //   }
-
-          //   setIsAssetChanged(true)
-
-          //   // 🔥 JIKA ASSET DIPILIH DULU → AUTO ISI LOCATION
-          //   if (!isLocationChanged && val?.location) {
-          //     const formatted = normalizeLocation(val)
-          //     setFieldValue('location_id', formatted)
-          //     setFieldValue('location_description', formatted.location_description)
-          //     setIsLocationDisabled(true)
-
-          //     if (isLocationFirst === null) {
-          //       setIsLocationFirst(false)
-          //       setFieldValue('is_location_first', false)
-          //     }
-          //   }
-          // }
-
 
           return (
             <Form>
@@ -449,7 +361,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                         apiController={getLocations}
                         value={values?.location_id}
                         valueKey="location_id"
-                        labelKey="location"
+                        labelKey="location_id"
                         searchKey="qLocation"
                         otherKey={{
                           asset_id: 'asset_id',
@@ -526,7 +438,6 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                       <CFormLabel className="text-primary fw-semibold">
                         Asset Site <span className="text-red-main">*</span>
                       </CFormLabel>
-                      {console.log(values, 'sauserbysite')}
                       <Field
                         name="site_id"
                         placeholder="Select Site"

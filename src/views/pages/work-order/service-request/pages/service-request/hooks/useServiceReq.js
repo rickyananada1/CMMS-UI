@@ -306,7 +306,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       ...(data?.location_id !== null && {
         location_id: {
           value: data.location_id,
-          label: data?.location,
+          label: data?.location_id,
           // location: data.location,
           location_description: data?.location_description,
         },
@@ -350,8 +350,8 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       }),
       ...(data?.affectedperson && {
         affectedperson: {
-          user_id: data?.reportedby, // dipakai buat match valueKey
-          display_name: data?.affectedperson, // LABEL YANG BENAR
+          value: Number(data?.affectedperson_id),
+          label: data?.affectedperson,
         },
       }),
       ticketid: data?.ticketid,
@@ -438,7 +438,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const updateServiceReq = useUpdateServiceReq()
 
   const handleSubmit = async (values, formikHelpers) => {
-    console.log('FINAL SUBMIT:', values)
     Notification.fire({
       icon: 'info',
       text: 'Are you sure to submit ?',
@@ -452,7 +451,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       if (result.isConfirmed) {
         const modifiedFormData = {
           ...values,
-          location_id: values?.location_id?.value,
+          location_id: values?.location_id?.label,
           // location: values.location_id?.value?.toString || "",
           // location: values?.location_id?.location ?? null,
           // location_description: values?.location_id?.location_description ?? null,
@@ -466,7 +465,14 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           description: values?.description || "",
           status: values?.status?.value ?? null,
           detailsummary: values?.detailsummary || "",
-          affectedperson: values?.affectedperson?.value ?? null,
+          affectedperson:
+            typeof values?.affectedperson === 'object'
+              ? (
+                values?.affectedperson?.value ??
+                values?.affectedperson?.label ??
+                null
+              )
+              : values?.affectedperson ?? null,
           targetstart: values?.targetstart ? moment(values?.targetstart).toISOString(true) : null,
           targetfinish: values?.targetfinish ? moment(values?.targetfinish).toISOString(true) : null,
           actualstart: values?.actualstart ? moment(values?.actualstart).toISOString(true) : null,
@@ -511,19 +517,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             await deletePendingFiles(deletedFiles)
           }
 
-          // Upload files with the correct URL
-          // if (files?.length > 0 && woId) {
-          //   try {
-          //     await uploadFiles(files, fileUploadUrl)
-          //   } catch (err) {
-          //     // Handle Nginx 413 or general upload error
-          //     const status = err?.response?.status
-          //     if (status === 413) {
-          //       throw new Error('Upload failed: File size exceeds server limit (Nginx)')
-          //     }
-          //     throw new Error('Upload failed: ' + (err.message || 'Unknown error'))
-          //   }
-          // }
           if (files?.length > 0 && woId) {
             const uploadResult = await uploadFiles(files, fileUploadUrl)
             setUploadSummary(uploadResult)
