@@ -66,7 +66,6 @@ const useList = () => {
               data: res?.data,
               fileName: 'service_request.csv',
             })
-            console.log(res, 'resss');
             Notification.fire({
               icon: 'success',
               title: 'Success!',

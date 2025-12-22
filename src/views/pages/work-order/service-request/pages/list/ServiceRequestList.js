@@ -201,7 +201,6 @@ const ServiceRequestList = () => {
           }
 
           onRowClicked={async (row) => {
-            console.log(row.original, 'rowowoo');
             setSelectedRow(row.original)
             resetSelectedTaskEtc()
           }}
