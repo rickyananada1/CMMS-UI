@@ -132,6 +132,7 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
     { label: 'Courier', value: 'courier' },
     { label: 'Holding', value: 'holding' },
     { label: 'Storeroom', value: 'storeroom' },
+    { label: 'Repair', value: 'repair' },
   ]
 
   const optionsStatus = [
