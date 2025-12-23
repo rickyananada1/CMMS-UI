@@ -82,6 +82,8 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   const selectedRow = useSelector((state) => state.ticketEcp?.selectedTicketEcp)
   const userOrgId = useSelector((state) => state.auth?.user?.organization_id)
   const userLogin = useSelector((state) => state.auth?.user)
+  console.log(userLogin, 'userLoginuserLogin');
+
   const phone_number = userLogin?.phone_number
   const email = userLogin?.email
   const organization_name = userLogin?.organization_name
@@ -100,7 +102,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   }
   const user = useSelector((state) => state.auth)
   const visiblePopUp = useSelector((state) => state.ticketEcp?.visiblePopUp)
-
+  const [createdWorkOrderId, setCreatedWorkOrderId] = useState(null)
   const [errorMessagePage, setErrorMessage] = useState('')
   const [data, setData] = useState({})
   const [isLoading, setIsLoading] = useState(true)
@@ -127,8 +129,8 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     ticketid: generateTicketEcp(),
     description: null,
     location_id: null,
-    location: null,
-    location_description: null,
+    // location: null,
+    // location_description: null,
     asset_id: null,
     asset_id: null,
     asset_num: null,
@@ -303,12 +305,12 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     const row = data[0];
     setFormValue((prev) => ({
       ...prev,
-      ...(data?.location && {
+      ...(data?.location_id && {
         location_id: {
-          value: data.location_id ?? data.location,
-          label: `${data.location} - ${data.location_description ?? ''}`,
-          location: data.location,
-          location_description: data.location_description ?? '',
+          value: data.location_id,
+          label: data?.location_id,
+          // location: data.location_id,
+          location_description: data.location_description,
         },
       }),
       ...(data?.asset_id !== null && {
@@ -353,9 +355,8 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
       description: data?.description,
       detailsummary: data?.detailsummary,
       asset_description: data?.asset_description,
-      location_description: data?.location_description,
+      // location_description: data?.location_description,
       display_name: data?.display_name,
-
       ticekt_ecp_attachment_url: data?.ticekt_ecp_attachment_url,
       reportedphone: data?.phone_number ?? prev.phone_number ?? null,
       reportedemail: data?.email ?? prev.email ?? null,
@@ -384,6 +385,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   const updateTicketEcp = useUpdateTicketEcp()
 
   const handleSubmit = async (values, formikHelpers) => {
+    console.log(values, 'hahavalues');
     Notification.fire({
       icon: 'info',
       text: 'Are you sure to submit ?',
@@ -396,22 +398,22 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
       if (result.isConfirmed) {
         const modifiedFormData = {
           ...values,
-          location_id: values?.location_id?.value ?? null,
-          location: values?.location_id?.location ?? null,
-          location_description: values?.location_id?.location_description ?? null,
+          location_id: values?.location_id?.label,
+          // location: values?.location_id?.location ?? null,
+          // location_description: values?.location_id?.location_description ?? null,
           asset_id: values?.asset_id?.value ?? null,
           assetnum: values?.asset_id?.label ?? null,
           asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
-          reportedby: values?.reportedby?.label
-            ? String(values.reportedby.label)
-            : null,
+          // reportedby: values?.reportedby?.label
+          //   ? String(values.reportedby.label)
+          //   : null,
           display_name: values?.reportedby?.label
             ? String(values.reportedby.label)
             : null,
-          reportedemail: values?.email || '',
+          reportedemail: values?.reportedemail || '',
           reportedphone: values?.reportedphone || '',
           organization_name: values?.organization_name || '',
-          siteid:
+          site_id:
             values?.site_id?.value
               ? String(values.site_id.value)
               : values?.asset_id?.site
@@ -420,7 +422,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
           description: values?.description || "",
           status: values?.status?.value ?? null,
           detailsummary: values?.detailsummary || "",
-          // organization_id: userOrgId || "",
+          organization_id: String(userOrgId || ""),
           reportdate: values?.reportdate
             ? moment(values.reportdate).format('YYYY-MM-DD')
             : moment().format('YYYY-MM-DD'),
@@ -433,18 +435,38 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
           if (mode === 'Create') {
             const response = await createTicketEcp.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.uuid
-
+            setCreatedWorkOrderId(woId)
             if (!woId) {
               throw new Error('Work Order ID not returned')
             }
+            console.log('Created UUID:', woId)
 
             fileUploadUrl = `/work-orders/${woId}/attachment`
+
+            // if (modifiedFormData.reportedby !== woId) {
+            //   await updateTicketEcp.mutateAsync({
+            //     id: woId,
+            //     data: { reportedby: woId }
+            //   })
+            //   console.log('Reportedby updated to Work Order UUID:', woId)
+            // }
+
+            // const modifiedDataWithUser = {
+            //   ...modifiedFormData,
+            //   uuid_user: woId, // kirim UUID backend sebagai uuid_user
+            // }
+
+            modifiedFormData.uuid_user = woId;
+            console.log(modifiedFormData, 'modifiedFormData');
+            
+
           } else {
             const updateRes = await updateTicketEcp.mutateAsync({
               id: selectedRow?.uuid,
               data: modifiedFormData,
             })
             woId = selectedRow?.uuid
+            setCreatedWorkOrderId(woId)
             fileUploadUrl = uploadUrl // Use existing URL for update mode
 
             if (!updateRes || !woId) {
@@ -515,64 +537,50 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   const deleteTicketEcpService = useDeleteTicketEcp()
 
   const validateEditDelete = async (type = 'edit') => {
-    const notifTitle = `Unable to ${type} Work Order`
+    const notifTitle = `Unable to ${type} Engineering Change Proposal`
     return new Promise((resolve) => {
-      if (
-        selectedRow.parent_wo_id !== null &&
-        !['INPRG', 'COMP', 'CLOSE'].includes(selectedRow.status)
-      ) {
-        setDisableEdit(true)
-        resolve(true)
-      } else if (selectedRow.status === 'INPRG' && selectedRow.parent_wo_id === null) {
-        setDisableEdit(true)
-        resolve(true)
-      } else if (selectedRow.status === 'INPRG') {
-        Notification.fire({
-          icon: 'error',
-          title: notifTitle,
-          html: `Work Order already started ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-            }`,
-        }).then(async (result) => {
-          if (result.isConfirmed || result.isDismissed) {
-            resolve(false)
-          }
-        })
-      } else if (selectedRow.status === 'CLOSE') {
-        Notification.fire({
-          icon: 'error',
-          title: notifTitle,
-          html: `Work Order already closed ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-            }`,
-        }).then(async (result) => {
-          if (result.isConfirmed || result.isDismissed) {
-            resolve(false)
-          }
-        })
-      } else if (selectedRow.status === 'COMP') {
-        Notification.fire({
-          icon: 'error',
-          title: notifTitle,
-          html: `Work Order already completed ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-            }`,
-        }).then(async (result) => {
-          if (result.isConfirmed || result.isDismissed) {
-            resolve(false)
-          }
-        })
-      } else if (selectedRow.parent_wo_id !== null) {
-        Notification.fire({
-          icon: 'error',
-          title: notifTitle,
-          html: `Work Order has a parent ${type === 'edit' ? '<br>Please use Work Order Actuals tab to edit' : ''
-            }`,
-        }).then(async (result) => {
-          if (result.isConfirmed || result.isDismissed) {
-            resolve(false)
-          }
-        })
-      } else {
-        resolve(true)
+      if (!selectedRow) {
+        resolve(false)
+        return
       }
+
+      // 1) Jika punya parent -> tidak boleh hapus
+      if (selectedRow.reportedby != null) {
+        Notification.fire({
+          icon: 'error',
+          title: notifTitle,
+          html: `Service Request has a parent`,
+        }).then(() => resolve(false))
+        return
+      }
+
+      // 2) Jika sudah dibatalkan atau ditutup -> tidak boleh hapus
+      if (selectedRow.status === 'CANCEL') {
+        Notification.fire({
+          icon: 'error',
+          title: notifTitle,
+          html: `Service Request already cancelled`,
+        }).then(() => resolve(false))
+        return
+      }
+      if (selectedRow.status === 'CLOSE') {
+        Notification.fire({
+          icon: 'error',
+          title: notifTitle,
+          html: `Service Request already closed`,
+        }).then(() => resolve(false))
+        return
+      }
+
+      // 3) Skenario khusus (opsional): jika status 'REVISED' dan reportedby null
+      if (type === 'edit' && selectedRow.status === 'REVISED' && selectedRow.reportedby === null) {
+        setDisableEdit(true)
+        resolve(true)
+        return
+      }
+
+      // Default: boleh delete/edit
+      resolve(true)
     })
   }
 
