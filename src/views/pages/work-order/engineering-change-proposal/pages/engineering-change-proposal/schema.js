@@ -5,15 +5,15 @@ const ticketEcpSchema = Yup.object().shape({
   description: Yup.string().required('Summary is required'),
   status: Yup.object().required('Status is Required'),
   // site_id: Yup.string().required('Site is required'),
-  organization: Yup.string().required('Organization is required'),
-  reportedemail: Yup.string().required('Email is required'),
-  reportedphone: Yup.string().required('Phone Number is required'),
+  // organization: Yup.string().required('Organization is required'),
+  // reportedemail: Yup.string().required('Email is required'),
+  // reportedphone: Yup.string().required('Phone Number is required'),
   // reporteddate: Yup.string().required('Reported Date is Required'),
-  reportedby: Yup.object()
-    .shape({
-      value: Yup.string().required('Reportedby is required'),
-    })
-    .required('Reportedby is required'),
+  // reportedby: Yup.object()
+  //   .shape({
+  //     value: Yup.string().required('Reportedby is required'),
+  //   })
+  //   .required('Reportedby is required'),
   location_id: Yup.object()
     .nullable()
     .test(

@@ -55,7 +55,7 @@ function updateTicketEcpStatuses(currentStatus) {
     'CAN'];
 
   if (!validStatuses.includes(currentStatus)) {
-    console.error(`Unknown service request status: ${currentStatus}`);
+    console.error(`Unknown Engineering Change Proposal status: ${currentStatus}`);
     return;
   }
   ticket_ecp_statuses.length = 0;
@@ -82,14 +82,12 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   const selectedRow = useSelector((state) => state.ticketEcp?.selectedTicketEcp)
   const userOrgId = useSelector((state) => state.auth?.user?.organization_id)
   const userLogin = useSelector((state) => state.auth?.user)
-  console.log(userLogin, 'userLoginuserLogin');
-
   const phone_number = userLogin?.phone_number
   const email = userLogin?.email
   const organization_name = userLogin?.organization_name
 
   const userSite = {
-    site_id: useSelector((state) => state.auth?.user?.site_id),
+    siteid: useSelector((state) => state.auth?.user?.site_id),
     site: useSelector((state) => state.auth?.user?.site),
   }
   const userService = {
@@ -102,7 +100,6 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   }
   const user = useSelector((state) => state.auth)
   const visiblePopUp = useSelector((state) => state.ticketEcp?.visiblePopUp)
-  const [createdWorkOrderId, setCreatedWorkOrderId] = useState(null)
   const [errorMessagePage, setErrorMessage] = useState('')
   const [data, setData] = useState({})
   const [isLoading, setIsLoading] = useState(true)
@@ -132,13 +129,12 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     // location: null,
     // location_description: null,
     asset_id: null,
-    asset_id: null,
     asset_num: null,
     asset_description: null,
-    site_id:
-      userSite?.site_id !== null
+    siteid:
+      userSite?.siteid !== null
         ? {
-          value: userSite?.site_id,
+          value: userSite?.siteid,
           label: userSite?.site,
         }
         : null,
@@ -163,6 +159,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     reportedphone: phone_number ?? null,
     reportedemail: email ?? null,
     organization: organization_name ?? null,
+    organization_name: organization_name ?? null,
   })
   const [oldStatus, setOldStatus] = useState('')
 
@@ -339,7 +336,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
       }),
       ...(data?.siteid && {
         siteid: {
-          value: data.siteid,
+          value: data.site_id,
           label: data.siteid,
         },
       }),
@@ -403,6 +400,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
           // location_description: values?.location_id?.location_description ?? null,
           asset_id: values?.asset_id?.value ?? null,
           assetnum: values?.asset_id?.label ?? null,
+          asset_num: values?.asset_id?.label ?? null,
           asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
           // reportedby: values?.reportedby?.label
           //   ? String(values.reportedby.label)
@@ -413,16 +411,12 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
           reportedemail: values?.reportedemail || '',
           reportedphone: values?.reportedphone || '',
           organization_name: values?.organization_name || '',
-          site_id:
-            values?.site_id?.value
-              ? String(values.site_id.value)
-              : values?.asset_id?.site
-                ? String(values.asset_id.site)
-                : null,
+          siteid: String(userLogin?.uuid_site || ""),
           description: values?.description || "",
           status: values?.status?.value ?? null,
           detailsummary: values?.detailsummary || "",
-          organization_id: String(userOrgId || ""),
+          uuid_user: String(userLogin?.uuid || ""),
+          organization_id: String(userLogin?.uuid_organization || ""),
           reportdate: values?.reportdate
             ? moment(values.reportdate).format('YYYY-MM-DD')
             : moment().format('YYYY-MM-DD'),
@@ -435,30 +429,10 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
           if (mode === 'Create') {
             const response = await createTicketEcp.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.uuid
-            setCreatedWorkOrderId(woId)
             if (!woId) {
               throw new Error('Work Order ID not returned')
             }
-            console.log('Created UUID:', woId)
-
             fileUploadUrl = `/work-orders/${woId}/attachment`
-
-            // if (modifiedFormData.reportedby !== woId) {
-            //   await updateTicketEcp.mutateAsync({
-            //     id: woId,
-            //     data: { reportedby: woId }
-            //   })
-            //   console.log('Reportedby updated to Work Order UUID:', woId)
-            // }
-
-            // const modifiedDataWithUser = {
-            //   ...modifiedFormData,
-            //   uuid_user: woId, // kirim UUID backend sebagai uuid_user
-            // }
-
-            modifiedFormData.uuid_user = woId;
-            console.log(modifiedFormData, 'modifiedFormData');
-            
 
           } else {
             const updateRes = await updateTicketEcp.mutateAsync({
@@ -466,7 +440,6 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
               data: modifiedFormData,
             })
             woId = selectedRow?.uuid
-            setCreatedWorkOrderId(woId)
             fileUploadUrl = uploadUrl // Use existing URL for update mode
 
             if (!updateRes || !woId) {
@@ -549,7 +522,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Service Request has a parent`,
+          html: `Engineering Change Proposal has a parent`,
         }).then(() => resolve(false))
         return
       }
@@ -559,7 +532,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Service Request already cancelled`,
+          html: `Engineering Change Proposal already cancelled`,
         }).then(() => resolve(false))
         return
       }
@@ -567,7 +540,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
         Notification.fire({
           icon: 'error',
           title: notifTitle,
-          html: `Service Request already closed`,
+          html: `Engineering Change Proposal already closed`,
         }).then(() => resolve(false))
         return
       }
