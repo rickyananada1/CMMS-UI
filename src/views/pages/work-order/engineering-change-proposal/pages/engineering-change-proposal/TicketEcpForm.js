@@ -80,6 +80,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex, formik }) => {
         }) => {
           const handleLocationChange = (val) => {
             setFieldValue('location_id', val)
+            setFieldValue('location', val?.label || '')
 
             if (!val) {
               setFieldValue('asset_id', null)
@@ -284,7 +285,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex, formik }) => {
                     <CCol>
                       <CFormLabel className="text-primary fw-semibold">
                         Asset <span className="text-red-main">*</span>
-                      </CFormLabel>
+                      </CFormLabel>          
                       <Field
                         key={
                           values?.location_id?.value ||
@@ -303,7 +304,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex, formik }) => {
                           location_description: 'location_description',
                           asset_description: 'asset_description',
                           site: 'site',
-                          site_id: 'site_id',
+                          siteid: 'site_id',
                         }}
                         onChange={handleAssetChange}
                         query={{
@@ -493,9 +494,9 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex, formik }) => {
                         Site <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
-                        name="site_id"
+                        name="siteid"
                         placeholder="Enter Site"
-                        value={values?.asset_id?.site || ''}
+                        value={values?.siteid?.label}
                         size="md"
                         disabled
                         as={CFormInput}

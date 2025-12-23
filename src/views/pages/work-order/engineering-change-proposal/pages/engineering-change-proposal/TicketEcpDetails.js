@@ -1,6 +1,5 @@
 /* eslint-disable */
 /* prettier-ignore-start */
-import { useSelector } from 'react-redux'
 import React from 'react'
 import { DetailCard } from 'src/components/elements/cards'
 import { CContainer, CCol, CRow } from '@coreui/react'
@@ -11,11 +10,6 @@ import { FaPaperclip } from 'react-icons/fa'
 import AttachmentDrawer from 'src/components/elements/drawer/AttachmentDrawer'
 
 const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
-   const selectedTicket = useSelector(state => state.ticketEcp.selectedTicketEcp)
-
-  console.log("🟦 SELECTED TICKET:", selectedTicket)
-  console.log("🟩 ID DI DETAIL:", selectedTicket?.uuid)
-  console.log("🟩 MODE:", mode)
   const {
     data,
     isLoading,
@@ -102,7 +96,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
             <CCol>
               <label className="text-neutral-text-field">Location</label>
               <br />
-              <span className="font-semibold">{data?.location ?? '-'}</span>
+              <span className="font-semibold">{data?.location_id ?? '-'}</span>
             </CCol>
             <CCol>
               <label className="text-neutral-text-field">Location Description</label>
@@ -130,12 +124,12 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
             <CCol>
               <label className="text-neutral-text-field">Reported Phone</label>
               <br />
-              <span className="font-semibold">{data?.phone_number ?? '-'}</span>
+              <span className="font-semibold">{data?.reportedphone ?? '-'}</span>
             </CCol>
             <CCol>
               <label className="text-neutral-text-field">Reported E-mail</label>
               <br />
-              <span className="font-semibold">{data?.email ?? '-'}</span>
+              <span className="font-semibold">{data?.reportedemail ?? '-'}</span>
             </CCol>
           </CRow>
           <CRow>
@@ -147,7 +141,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
             <CCol md={3}>
               <label className="text-neutral-text-field">Asset Site</label>
               <br />
-              <span className="font-semibold">{data?.site ? data?.siteid : '-'}</span>
+              <span className="font-semibold">{data?.siteid ?? '-'}</span>
             </CCol>
           </CRow>
         </CContainer>

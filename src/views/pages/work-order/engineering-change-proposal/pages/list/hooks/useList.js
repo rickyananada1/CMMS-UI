@@ -1,3 +1,5 @@
+/* eslint-disable */
+/* prettier-ignore-start */
 import { useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ticketEcpActions } from '../../../slices/ticketEcpSlice'
@@ -6,13 +8,6 @@ import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 import { downloadFileContentDisposition } from 'src/utils/helper'
 import { useDownloadTicketEcp } from '../services'
-// import { woToolsActions } from '../../plans/pages/labor-materials-tools/slices/woToolsSlices'
-// import { woMaterialsActions } from '../../plans/pages/labor-materials-tools/slices/woMaterialsSlices'
-// import { woLaborActions } from '../../plans/pages/labor-materials-tools/slices/woLaborSlices'
-// import { woTaskActions as planTaskActions } from '../../plans/pages/task-for-wo/slices/woTaskSlices'
-// import { woTaskActions as actualsTaskActions } from '../../actuals/pages/task-for-wo/slices/woTaskSlices'
-// import { woChildernActions as plansChildrenActions } from '../../plans/pages/childern-of-wo/slices/woChildernSlices'
-// import { woChildernActions as actualsChildrenActions } from '../../actuals/pages/childern-of-wo/slices/woChildernSlices'
 
 const useList = () => {
   const Notification = withReactContent(Swal)
@@ -57,21 +52,11 @@ const useList = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         const column_names = [
-          'work_order_code',
+          'ticketid',
           'description',
-          'location',
-          'location_description',
-          'work_type',
-          'assign_person',
-          'asset_num',
-          'asset_desc',
+          'display_name',
           'status',
-          'failure_code',
-          'scheduled_start',
-          'scheduled_finish',
-          'work_priority',
           'site',
-          'site_desc',
         ]
 
         await downloadTicketEcpService
@@ -83,13 +68,13 @@ const useList = () => {
           .then((res) => {
             downloadFileContentDisposition({
               data: res?.data,
-              fileName: 'ticket-ecp.csv',
+              fileName: 'Engineering Change Proposal.csv',
             })
 
             Notification.fire({
               icon: 'success',
               title: 'Success!',
-              text: `WO Tracking downloaded successfully.`,
+              text: `Engineering Change Proposal downloaded successfully.`,
             })
           })
           .catch((err) => {

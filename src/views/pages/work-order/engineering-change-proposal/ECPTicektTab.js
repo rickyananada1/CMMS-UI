@@ -21,12 +21,10 @@ const ECPTicektTab = () => {
   const tabsContent = [
     {
       title: 'List',
-      // element: <ServiceRequestList  onGoToServiceRequest={() => setActiveTab(1)} />,
       element: <TicketEcpList />,
     },
     {
       title: 'Engineering Change Proposal',
-      // element: <ServiceRequestIndex />,
       disabled: !ticketEcpState?.selectedTicketEcp,
       element: (
         <TicketEcpIndex
@@ -64,7 +62,6 @@ const ECPTicektTab = () => {
           app_name: 'Engineering Change Proposal',
           app_action: 'Create',
           action: () => {
-            console.log("CREATE CLICKED!")
             dispatch(
               ticketEcpActions.setSelectedAppIndexAndAction({
                 index: 1,

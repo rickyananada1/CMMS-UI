@@ -136,25 +136,9 @@ const TicketEcpList = () => {
     tableRef,
     handleSearch,
     searchDebounce,
-    downloadServiceReq,
+    downloadTicketEcp,
     resetSelectedTaskEtc,
   } = useList()
-
-
-  //   // fetch detail ketika selectedRow berubah
-  //  const { data: detailSR, isLoading: isDetailLoading } = useGetServiceRequestDetail({
-  //     id: selectedRow?.ticketid,
-  //     config: {
-  //       enabled: !!selectedRow?.ticketid, // penting agar tidak fetch undefined
-  //     },
-  //   })
-
-  //   useEffect(() => {
-  //     if (detailSR) {
-  //       // simpan data lengkap ke Redux
-  //       dispatch(serviceRequestActions.setselectedServiceReq(detailSR.data))
-  //     }
-  //   }, [detailSR, dispatch])
 
   return (
     <div>
@@ -177,7 +161,7 @@ const TicketEcpList = () => {
           </div>
           <button
             className={`flex items-center cursor-pointer text-body-bold text-primary-main`}
-            onClick={downloadServiceReq}
+            onClick={downloadTicketEcp}
           >
             <MdOutlineCloudDownload className={`mr-2 text-primary-main`} />
             Download
@@ -195,7 +179,6 @@ const TicketEcpList = () => {
           }
 
           onRowClicked={async (row) => {
-            console.log(row.original, 'rowowoo');
             setSelectedRow(row.original)
             resetSelectedTaskEtc()
           }}

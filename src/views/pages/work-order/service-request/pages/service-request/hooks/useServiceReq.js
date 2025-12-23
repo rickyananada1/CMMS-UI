@@ -447,7 +447,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
       confirmButtonText: 'Yes! Confirm',
       confirmButtonColor: '#2671D9',
     }).then(async (result) => {
-      setIsLoading(true)
       if (result.isConfirmed) {
         const modifiedFormData = {
           ...values,
@@ -544,7 +543,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
             text: error.response?.data?.message || error.message || 'Something went wrong!',
           })
         } finally {
-          setIsLoading(false)
           formikHelpers.setSubmitting(false)
         }
       }
