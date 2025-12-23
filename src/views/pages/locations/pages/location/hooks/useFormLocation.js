@@ -136,7 +136,7 @@ const useFormLocation = ({ mode, setAction, setTabIndex }) => {
   ]
 
   const optionsStatus = [
-    { label: 'Planned', value: 'planned' },
+    { label: 'Not Ready', value: 'not ready' },
     { label: 'Operating', value: 'operating' },
     { label: 'Decommissioned', value: 'decommissioned' },
   ]
