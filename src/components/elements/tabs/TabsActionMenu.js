@@ -195,7 +195,7 @@ const TabsActionMenu = ({actionMenu, callback}) => {
 										<p className="mt-2 text-body-small text-neutral-text-field text-nowrap font-normal">{el.group}</p>
 										<hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke"></hr>
 									</div>
-									<div className="text-body-medium grid grid-cols-2 gap-0 mb-2">
+									<div className="text-body-medium grid grid-cols-2 gap-0 mb-2 truncate">
 										{TabsActionSubMenu(el.menu, el.group, (val) => {
 											setVisible(false)
 											callback(val)
