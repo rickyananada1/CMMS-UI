@@ -66,7 +66,7 @@ const columns = [
     header: 'Summary',
     accessorKey: 'description',
     qName: 'qDescription',
-    size: 250,
+    size: 1000,
     cell: (row) => (
       <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
     ),
