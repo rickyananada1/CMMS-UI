@@ -177,6 +177,7 @@ const AssetsSafetyHazardAndPrecautionsForm = ({ mode, setAction, setTabIndex }) 
                                   }}
                                   value={item?.hazard?.hazard?.hazard_type}
                                   as={CFormInput}
+                                  disabled
                                 />
                                 {errors?.hazard_and_precautions &&
                                 errors?.hazard_and_precautions[index]?.hazard?.hazard
