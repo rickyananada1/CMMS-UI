@@ -7,6 +7,12 @@ import moment from 'moment'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
 
 const AttachmentDrawer = ({ isOpen, onClose, files, selectedFile, onSelectFile }) => {
+  // Clean /api from URLs
+  const cleanUrl = (url) => {
+    if (!url) return url
+    return url.replace(/\/api\//, '/')
+  }
+
   const { handleDownload } = useFileUpload({
     fieldName: 'files',
     uploadUrl: '',
@@ -99,7 +105,11 @@ const AttachmentDrawer = ({ isOpen, onClose, files, selectedFile, onSelectFile }
                 </h2>
                 <button
                   onClick={(event) =>
-                    handleDownload(event, selectedFile?.url, selectedFile?.file_path?.split('/')[2])
+                    handleDownload(
+                      event,
+                      cleanUrl(selectedFile?.url),
+                      selectedFile?.file_path?.split('/')[2],
+                    )
                   }
                   className="inline-block py-1.5 text-sm font-medium text-primary-main hover:text-primary-hover underline"
                 >
@@ -111,7 +121,7 @@ const AttachmentDrawer = ({ isOpen, onClose, files, selectedFile, onSelectFile }
             <div className="flex-1 overflow-hidden border rounded border-[#E5E7E9] flex items-center justify-center">
               {selectedFile ? (
                 <AttachmentPreview
-                  fileUrl={selectedFile?.preview}
+                  fileUrl={cleanUrl(selectedFile?.preview)}
                   fileName={selectedFile?.file_path?.split('/')[2]}
                 />
               ) : (
