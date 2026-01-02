@@ -85,7 +85,6 @@ const useFailureReportingForm = ({ mode, setAction, setTabIndex }) => {
 
         if (mode === 'Create Failure') {
           modifiedFormData = values.failure_reporting.map((item) => item.failure_code_id.value)
-          console.log('mfd', modifiedFormData)
 
           await createFailureReporting
             .mutateAsync({
@@ -125,7 +124,6 @@ const useFailureReportingForm = ({ mode, setAction, setTabIndex }) => {
             work_order_failure_id: item.work_order_failure_id,
             failure_code_id: item.failure_code_id.value,
           }))
-          console.log('mfd', modifiedFormData)
           await updateFailureReporting
             .mutateAsync({
               id: selectedRow.work_order_id,
