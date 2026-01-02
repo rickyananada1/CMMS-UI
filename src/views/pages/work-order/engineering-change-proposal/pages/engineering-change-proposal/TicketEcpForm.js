@@ -509,7 +509,7 @@ const TicketEcpForm = ({ mode, setAction, setTabIndex, formik }) => {
                 </CContainer>
               </DetailCard>
               <CFooter className="form-footer">
-                <div className="ml-[80px] w-[10%] my-2 flex items-center justify-between">
+                <div className="ml-[80px] w-full my-2 flex items-center justify-between">
                   <CButton
                     color="danger"
                     variant="outline"

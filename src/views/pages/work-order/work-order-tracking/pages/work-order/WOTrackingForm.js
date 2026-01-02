@@ -971,7 +971,6 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                       <CFormLabel className="text-primary fw-semibold">
                         Service request <span className="text-red-main"></span>
                       </CFormLabel>
-                      {console.log(values, 'ijijiji')}
                       <Field
                         name="ticketid"
                         placeholder="Select Ticket"
@@ -984,7 +983,6 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                           description: 'description',
                         }}
                         onChange={(val) => {
-                          console.log('SELECTED:', val)
                           setFieldValue('ticketid', val)
                           setFieldValue('summary', val?.description || '')
                         }}

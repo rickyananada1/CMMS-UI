@@ -19,7 +19,6 @@ const detailServiceReqTable = () => {
   const selectedServiceReq = useSelector(
     (state) => state.serviceRequest?.selectedServiceRequest
   )
-  console.log(selectedServiceReq, 'selectedServiceReqselectedServiceReq');
   const serviceRequestDetailData = useSelector(
     (state) => state.serviceRequest?.setServiceRequestDetailData
   )
@@ -52,7 +51,6 @@ const detailServiceReqTable = () => {
 
     mutate(param.work_order_id, {
       onSuccess: (data) => {
-        console.log('Work Order detail:', data);
       },
       onError: (err) => {
         console.error('Failed to fetch work order:', err);
@@ -72,7 +70,6 @@ const detailServiceReqTable = () => {
     if (!serviceRequestDetailData || serviceRequestDetailData.length === 0) {
       getServiceReq.mutate({ id: selectedServiceReq.uuid }, {
         onSuccess: (data) => {
-          console.log('Service Request Detail restored:', data)
           dispatch(serviceRequestActions.setServiceRequestDetailData(data))
         },
         onError: (err) => console.error('saayu:', err),

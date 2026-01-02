@@ -19,7 +19,6 @@ import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 import { useGetListLocation } from 'src/views/pages/locations/pages/location/services'
 import moment from 'moment'
-import { useGetFrequencySeasonalDetail } from 'src/views/pages/work-order/preventive-maintenance/pages/frequency-seasonal/services'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
 import { useGetFileUploaded } from 'src/views/pages/upload-file/services/getFileUploaded'
 
@@ -109,21 +108,13 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   const [formValue, setFormValue] = useState({
     ticketid: generateServiceRequest(),
-    description: "",          // text input
-    status: null,             // select
-    detailsummary: "",        // Editor
-
-    // LOCATION
-    location_id: null,        // select
-    // location: "",             // string
-    // location_description: "", // textarea
-
-    // ASSET
-    asset_id: null,           // select
-    asset_num: "",             // string
-    asset_description: "",    // textarea
-
-    // SITE
+    description: "",
+    status: null,
+    detailsummary: "",
+    location_id: null,
+    asset_id: null,
+    asset_num: "",
+    asset_description: "",
     site_id:
       userSite?.siteid !== null
         ? {
@@ -132,9 +123,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
         }
         : null,
 
-    glaccount: "",            // text input
-
-    // REPORTED
+    glaccount: "", 
     reportedby:
       repId?.user_id !== null
         ? {
@@ -142,19 +131,14 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           label: repId?.reportedby,
         }
         : null,
-    reporteddate: "",         // date
+    reporteddate: "",
     display_name: "",
-
-    // PERSON
-    affectedperson: null,     // select
-    user_id: null,            // optional
-    // affecteddate: "",         // date
-
-    // DATES
-    targetstart: "",          // date
-    targetfinish: "",         // date
-    actualstart: "",          // date
-    actualfinish: "",         // date
+    affectedperson: null,
+    user_id: null,
+    targetstart: "", 
+    targetfinish: "",
+    actualstart: "", 
+    actualfinish: "",
   });
 
   const [oldStatus, setOldStatus] = useState('')
@@ -409,7 +393,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
     (state) => state.serviceRequest?.selectedServiceRequest
   )
 
-
   const { mutate: getServiceReq } = useGetServiceReq()
 
   useEffect(() => {
@@ -489,7 +472,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           if (mode === 'Create') {
             const response = await createServiceRequest.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.uuid
-
             if (!woId) {
               throw new Error('Service Request ID not returned')
             }
@@ -713,28 +695,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
         setVisible(false)
       }
     })
-  }
-
-  const getFrequencySeasonalDetail = useGetFrequencySeasonalDetail()
-
-  const getFrequencySeasonal = async (pm_id) => {
-    return await getFrequencySeasonalDetail
-      .mutateAsync({
-        id: pm_id,
-      })
-      .then((res) => {
-        return res?.data?.data?.estimated_next_schedule
-      })
-      .catch((err) => {
-        Notification.fire({
-          icon: 'error',
-          title: 'Error!',
-          text: `Error while while fetching Scheduled Start date: ${err?.response?.data?.message}`,
-        })
-      })
-      .finally(() => {
-        setIsLoading(false)
-      })
   }
 
   const getScheduledDateFromPM = async (pm_id) => {

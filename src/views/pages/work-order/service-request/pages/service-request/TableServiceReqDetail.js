@@ -111,8 +111,6 @@ const TableServiceReqDetail = ({ mode, setAction, setTabIndex, setVisible }) => 
           Work Order Related to Service Request
         </p>
         <hr className="w-full h-[1px] mt-[8px] bg-neutral-stroke" />
-        {console.log('SR ID (detaill):', selectedServiceReq?.uuid)
-        }
         <Table
           storeKey="service-request-detail"
           data={serviceRequestDetailData}

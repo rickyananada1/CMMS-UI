@@ -203,7 +203,6 @@ const useManualWOForm = ({ mode, setAction, setTabIndex }) => {
         data: fileFormData,
       })
       .then((res) => {
-        console.log('upload success', res)
         return res.data.data[0].url
       })
       .catch((err) => {

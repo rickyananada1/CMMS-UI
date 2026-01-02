@@ -33,6 +33,8 @@ import { quickReportingSlice } from 'src/views/pages/work-order/quick-reporting/
 import { preventiveMaintenanceSlice } from 'src/views/pages/work-order/preventive-maintenance/slices/preventiveMaintenanceSlices'
 import { serviceRequestSlice } from 'src/views/pages/work-order/service-request/slices/serviceRequestSlice'
 import { ticketEcpSlice } from 'src/views/pages/work-order/engineering-change-proposal/slices/ticketEcpSlice'
+import { failureAnalysSlice } from 'src/views/pages/work-order/engineering-change-proposal/pages/failure-analysis/slice/failureAnalysSlice'
+import { ecpSlice } from 'src/views/pages/work-order/engineering-change-proposal/pages/engineering-change-proposal/slice/ecpSlice'
 
 // Init Reducer
 const rootReducer = combineReducers({
@@ -50,6 +52,8 @@ const rootReducer = combineReducers({
   [assetSlice.name]: assetSlice.reducer,
   [serviceRequestSlice.name]: serviceRequestSlice.reducer,
   [ticketEcpSlice.name]: ticketEcpSlice.reducer,
+  [failureAnalysSlice.name]: failureAnalysSlice.reducer,
+  [ecpSlice.name]: ecpSlice.reducer,
   [woTrackingSlice.name]: woTrackingSlice.reducer,
   [woChildernSlice.name]: woChildernSlice.reducer,
   [woTaskSlice.name]: woTaskSlice.reducer,
@@ -83,6 +87,8 @@ const persistConfig = {
     assetSlice.name,
     serviceRequestSlice.name,
     ticketEcpSlice.name,
+    failureAnalysSlice.name,
+    ecpSlice.name,
     woTrackingSlice.name,
     woChildernSlice.name,
     woTaskSlice.name,
@@ -105,7 +111,11 @@ const persistedReducer = persistReducer(persistConfig, rootReducer)
 // Create Store
 const store = configureStore({
   reducer: persistedReducer,
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+      immutableCheck: false,
+    }),
 })
 
 persistStore(store)

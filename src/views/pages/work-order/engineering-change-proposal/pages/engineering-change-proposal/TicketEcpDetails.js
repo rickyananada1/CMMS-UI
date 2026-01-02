@@ -19,7 +19,7 @@ const TicketEcpDetails = ({ mode, setAction, setTabIndex, setVisible }) => {
     selectedFile,
     setSelectedFile,
     handleOpenDrawer,
-  } = useTicketEcp({
+} = useTicketEcp({
     mode,
     setAction,
     setTabIndex,
