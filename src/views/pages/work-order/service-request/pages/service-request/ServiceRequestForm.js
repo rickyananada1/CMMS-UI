@@ -262,7 +262,6 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                       </CFormLabel>
                       <div>
                         <Editor
-                          key={values.detailsummary}
                           name="detailsummary"
                           value={typeof values.detailsummary === 'string'
                             ? values.detailsummary
@@ -664,7 +663,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                 </CContainer>
               </DetailCard>
               <CFooter className="form-footer">
-                <div className="ml-[80px] w-[10%] my-2 flex items-center justify-between">
+                <div className="ml-[80px] w-full my-2 flex items-center justify-between">
                   <CButton
                     color="danger"
                     variant="outline"

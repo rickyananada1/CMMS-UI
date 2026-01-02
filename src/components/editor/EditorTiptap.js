@@ -37,6 +37,8 @@ const EditorTiptap = ({
         bulletList: false,
         orderedList: false,
         listItem: false,
+        underline: false,
+        link: false,
         // listKeymap: false,
       }),
       Underline,
@@ -91,16 +93,16 @@ const EditorTiptap = ({
   });
 
   React.useEffect(() => {
-  if (!editor || !value) return;
+    if (!editor || !value) return;
 
-  const hasImage = editor.getHTML().includes("<img");
-  const valueHasImage = value.includes("<img");
+    const hasImage = editor.getHTML().includes("<img");
+    const valueHasImage = value.includes("<img");
 
-  // jangan replace content kalau editor sudah ada image
-  if (!hasImage && value !== editor.getHTML()) {
-    editor.commands.setContent(value);
-  }
-}, [value, editor]);
+    // jangan replace content kalau editor sudah ada image
+    if (!hasImage && value !== editor.getHTML()) {
+      editor.commands.setContent(value);
+    }
+  }, [value, editor]);
 
 
   return (

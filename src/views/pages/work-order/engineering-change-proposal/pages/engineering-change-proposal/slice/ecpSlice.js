@@ -3,47 +3,53 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
   selectedAppIndex: 0,
   selectedAppAction: 'Read',
-  selectedTicketEcp: null,
+  selectedECp: null,
+  selectedGroup: null,
+  currentData: null,
+  hasData: false,
   visiblePopUp: false,
-  selectedFailureAnalysisTab: 0,
-  selectedFailureDefTab: 0,
+  data: [],
 }
 
-export const ticketEcpSlice = createSlice({
-  name: 'ticketEcp',
+export const ecpSlice = createSlice({
+  name: 'ecpDetail',
   initialState,
   reducers: {
+    setEcpData(state, action) {
+      state.data = action.payload
+      state.hasData = action.payload?.length > 0
+    },
+    resetEcpData(state) {
+      state.data = []
+      state.currentData = null
+      state.hasData = false
+      state.selectedECp = null
+    },
+    setSelectedEcp(state, action) {
+      state.selectedECp = action.payload
+    },
     setSelectedAppIndex(state, action) {
       state.selectedAppIndex = action.payload
     },
     setSelectedAppAction(state, action) {
       state.selectedAppAction = action.payload
     },
-    setSelectedTicketEcp(state, action) {
-      state.selectedTicketEcp = action.payload
+    setSelectedGroup(state, action) {
+      state.selectedGroup = action.payload
     },
     setSelectedAppIndexAndAction(state, action) {
       state.selectedAppIndex = action.payload?.index
       state.selectedAppAction = action.payload?.action
     },
-    setSelectedGroup(state, action) {
-      state.selectedGroup = action.payload
-    },
     setVisiblePopUp(state, action) {
       state.visiblePopUp = action.payload
     },
-    // selectedFailureAnalysisTab(state, action) {
-    //   state.selectedPlanTab = action.payload
-    // },
-    // selectedFailureDefTab(state, action) {
-    //   state.selectedActualTab = action.payload
-    // },
     resetState() {
       return initialState
     },
   },
 })
 
-export const ticketEcpActions = ticketEcpSlice.actions
+export const ecpDetailActions = ecpSlice.actions
 
-export default ticketEcpSlice.reducer
+export default ecpSlice.reducer

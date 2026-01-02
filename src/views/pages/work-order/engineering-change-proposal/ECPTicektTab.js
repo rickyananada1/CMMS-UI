@@ -6,17 +6,41 @@ import { TabsWrapper } from 'src/components/elements/tabs'
 import TicketEcpList from '../engineering-change-proposal/pages/list/TicketEcpList'
 import { useDispatch, useSelector } from 'react-redux'
 import TicketEcpIndex from '../engineering-change-proposal/pages/engineering-change-proposal/TicketEcpIndex'
+import FailureAnalysIndex from '../engineering-change-proposal/pages/failure-analysis/FailureAnalysIndex'
 import { breadcrumbActions } from 'src/store/actions'
 import { ticketEcpActions } from './slices/ticketEcpSlice'
+import { faTaskActions } from '../engineering-change-proposal/pages/failure-analysis/slice/failureAnalysSlice'
 
 const ECPTicektTab = () => {
   const dispatch = useDispatch()
   const ticketEcpState = useSelector((state) => state.ticketEcp)
+  const faTaskState = useSelector((state) => state.faTask)
 
-    {
-    console.log("SELECTED ECP:", ticketEcpState.selectedTicketEcp)
-    console.log("ID YANG DIPAKAI:", ticketEcpState.selectedTicketEcp?.ticketid)
-  }
+  const [activeTabIndex, setActiveTabIndex] = useState(ticketEcpState.selectedAppIndex)
+
+  const hasFailureAnalysisData = React.useMemo(() => {
+    if (faTaskState?.data?.length > 0) {
+      const firstItem = faTaskState.data[0]
+
+      const hasContent =
+        (firstItem.fmea_summary && firstItem.fmea_summary.trim() !== '' && firstItem.fmea_summary.trim() !== '-') ||
+        (firstItem.fmea_desc && firstItem.fmea_desc.trim() !== '' && firstItem.fmea_desc.trim() !== '-') ||
+        (firstItem.rcfa_summary && firstItem.rcfa_summary.trim() !== '' && firstItem.rcfa_summary.trim() !== '-') ||
+        (firstItem.rcfa_desc && firstItem.rcfa_desc.trim() !== '' && firstItem.rcfa_desc.trim() !== '-') ||
+        (firstItem.cba_summary && firstItem.cba_summary.trim() !== '' && firstItem.cba_summary.trim() !== '-') ||
+        (firstItem.cba_desc && firstItem.cba_desc.trim() !== '' && firstItem.cba_desc.trim() !== '-') ||
+        (firstItem.lcca_summary && firstItem.lcca_summary.trim() !== '' && firstItem.lcca_summary.trim() !== '-') ||
+        (firstItem.lcca_desc && firstItem.lcca_desc.trim() !== '' && firstItem.lcca_desc.trim() !== '-')
+
+      return hasContent
+    }
+
+    return false
+  }, [faTaskState])
+
+  useEffect(() => {
+    setActiveTabIndex(ticketEcpState.selectedAppIndex)
+  }, [ticketEcpState.selectedAppIndex])
 
   const tabsContent = [
     {
@@ -39,7 +63,11 @@ const ECPTicektTab = () => {
       title: 'Failure Analysis',
       disabled: !ticketEcpState?.selectedTicketEcp,
       element: (
-        ` <div>adsa</div>>`
+        <FailureAnalysIndex
+          mode={ticketEcpState?.selectedAppAction}
+          setAction={(param) => dispatch(ticketEcpActions.setSelectedAppAction(param))}
+          setTabIndex={(param) => dispatch(ticketEcpActions.setSelectedAppIndex(param))}
+        />
       ),
     },
     {
@@ -104,6 +132,49 @@ const ECPTicektTab = () => {
         },
       ],
     },
+    {
+      group: 'Failure Analysis',
+      menu: [
+        // CREATE - selalu tampilkan
+        {
+          title: 'Create Failure Analysis',
+          modul_name: 'Work Order',
+          app_group: 'Work Order',
+          app_name: 'Engineering Change Proposal',
+          app_action: 'Create',
+         disabled: !ticketEcpState?.selectedTicketEcp || 
+                   activeTabIndex !== 2 || 
+                   hasFailureAnalysisData,
+          action: () => {
+            dispatch(
+              ticketEcpActions.setSelectedAppIndexAndAction({
+                index: 2,
+                action: 'Create',
+              }),
+            )
+          },
+        },
+        // UPDATE - selalu tampilkan
+        {
+          title: 'Update Failure Analysis',
+          modul_name: 'Work Order',
+          app_group: 'Work Order',
+          app_name: 'Engineering Change Proposal',
+          app_action: 'Update',
+         disabled: !ticketEcpState?.selectedTicketEcp || 
+                   activeTabIndex !== 2 || 
+                   !hasFailureAnalysisData,
+          action: () => {
+            dispatch(
+              ticketEcpActions.setSelectedAppIndexAndAction({
+                index: 2,
+                action: 'Update',
+              }),
+            )
+          },
+        },
+      ],
+    },
   ]
 
   useEffect(() => {
@@ -119,7 +190,6 @@ const ECPTicektTab = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketEcpState.selectedAppIndex])
 
-  // Cleanup function to dispatch reset action when component is unmounted
   useEffect(() => {
     return () => {
       dispatch(ticketEcpActions.resetState())

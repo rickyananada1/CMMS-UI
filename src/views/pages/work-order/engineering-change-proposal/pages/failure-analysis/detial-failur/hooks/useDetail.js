@@ -1,19 +1,19 @@
 /* eslint-disable */
 /* prettier-ignore-start */
-import { useEffect, useMemo, useState } from 'react'
-import { ticketEcpActions } from '../../../slices/ticketEcpSlice'
+import React, { useEffect, useMemo, useState } from 'react'
+// import { ticketEcpActions } from '../../../slices/ticketEcpSlice'
 import { useSelector, useDispatch } from 'react-redux'
 import {
-  useCreateTicketEcp,
-  useGetTicketEcp,
-  useUpdateTicketEcp,
-  useDeleteTicketEcp,
-  useGetTicketEcps,
-  useGetReportBy,
-  useGetFailureCodes,
-  useGetSites,
-  useGetAssets,
-  useGetUserSites,
+  // useCreateTicketEcp,
+  useGetDetailFailure,
+  // useUpdateTicketEcp,
+  // useDeleteTicketEcp,
+  // useGetTicketEcps,
+  // useGetReportBy,
+  // useGetFailureCodes,
+  // useGetSites,
+  // useGetAssets,
+  // useGetUserSites,
 } from '../services'
 import { useLocation } from 'react-router-dom'
 import Swal from 'sweetalert2'
@@ -25,7 +25,6 @@ import { useGetPreventiveMaintenanceDropdown } from 'src/views/pages/work-order/
 import { useGetFrequencySeasonalDetail } from 'src/views/pages/work-order/preventive-maintenance/pages/frequency-seasonal/services'
 import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
 import { useGetFileUploaded } from 'src/views/pages/upload-file/services/getFileUploaded'
-import { organizationActions } from 'src/views/pages/organization/slices/organizationSlices'
 
 var ticket_ecp_statuses = [
   { value: 'NEW', label: 'NEW' },
@@ -76,7 +75,7 @@ function generateTicketEcp() {
   return prefix + randomString
 }
 
-const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
+const useDetail = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   const Notification = withReactContent(Swal)
   const dispatch = useDispatch()
   const selectedRow = useSelector((state) => state.ticketEcp?.selectedTicketEcp)
@@ -110,7 +109,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   const [isLocationFirst, setIsLocationFirst] = useState(null)
   const [dataFile, setDataFile] = useState([])
   const [isDrawerOpen, setDrawerOpen] = useState(false)
-  const [selectedFile, setSelectedFile] = useState(null)
+  const [selectedFiles, setSelectedFile] = useState(null)
   const [isUploadSummaryModalOpen, setIsUploadSummaryModalOpen] = useState(false)
   const [uploadSummary, setUploadSummary] = useState({ successfulUploads: [], failedUploads: [] })
 
@@ -119,7 +118,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     setSelectedFile(null)
   }
 
-  const getTicketEcpService = useGetTicketEcp()
+  const getTicketEcpService = useGetDetailFailure()
   const location = useLocation()
 
   const [formValue, setFormValue] = useState({
@@ -201,13 +200,13 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   }, [setVisible])
 
   const getLocations = useGetListLocation()
-  const getAssets = useGetAssets()
-  const getSites = useGetSites({ org_id: userOrgId })
+  // const getAssets = useGetAssets()
+  // const getSites = useGetSites({ org_id: userOrgId })
   // const getFailureCodes = useGetFailureCodes()
-  const getDatTicketEcp = useGetTicketEcps()
+  // const getDatTicketEcp = useGetDetailFailures()
   const site = useSelector((state) => state.auth?.user?.site)
-  const getReportBy = useGetReportBy()
-  const getUserSites = useGetUserSites({ site })
+  // const getReportBy = useGetReportBy()
+  // const getUserSites = useGetUserSites({ site })
   const getJobPlanList = useGetJobPlanDropdown()
   const getPMList = useGetPreventiveMaintenanceDropdown()
 
@@ -238,8 +237,8 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     if (mode === 'Update' && selectedRow?.uuid) {
       const woId = selectedRow.uuid
       return {
-        uploadUrl: `/ticketecp/${woId}/attachment`,
-        fetchUrl: `/ticketecp/${woId}/attachment`,
+        uploadUrl: `/work-orders/${woId}/attachment`,
+        fetchUrl: `/work-orders/${woId}/attachment`,
       }
     }
     // For create mode, return empty strings
@@ -378,8 +377,8 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   }, [getTicketEcpService.data])
 
 
-  const createTicketEcp = useCreateTicketEcp()
-  const updateTicketEcp = useUpdateTicketEcp()
+  // const createTicketEcp = useCreateTicketEcp()
+  // const updateTicketEcp = useUpdateTicketEcp()
 
   const handleSubmit = async (values, formikHelpers) => {
     Notification.fire({
@@ -431,7 +430,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
             if (!woId) {
               throw new Error('Work Order ID not returned')
             }
-            fileUploadUrl = `/ticketecp/${woId}/attachment`
+            fileUploadUrl = `/work-orders/${woId}/attachment`
 
           } else {
             const updateRes = await updateTicketEcp.mutateAsync({
@@ -506,7 +505,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     setAction('Read')
   }
 
-  const deleteTicketEcpService = useDeleteTicketEcp()
+  // const deleteTicketEcpService = useDeleteTicketEcp()
 
   const validateEditDelete = async (type = 'edit') => {
     const notifTitle = `Unable to ${type} Engineering Change Proposal`
@@ -678,7 +677,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   }
 
   const getDetailFile = useGetFileUploaded({
-    url: `/ticketecp/${selectedRow?.uuid}/attachment`,
+    url: `/work-orders/${selectedRow?.uuid}/attachment`,
     config: {
       enabled: false,
     },
@@ -748,11 +747,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     setSelectedRow,
     handleSubmit,
     getLocations,
-    getAssets,
-    getSites,
-    getUserSites,
     ticket_ecp_statuses,
-    getReportBy,
     disableEdit,
     getJobPlanList,
     getPMList,
@@ -767,7 +762,6 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     setIsLocationFirst,
     isModalOpen,
     setIsModalOpen,
-    getDatTicketEcp,
     fieldName,
     uploadUrl,
     fetchUrl,
@@ -776,7 +770,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
     dataFile,
     isDrawerOpen,
     setDrawerOpen,
-    selectedFile,
+    selectedFiles,
     setSelectedFile,
     handleOpenDrawer,
     uploadFiles,
@@ -791,4 +785,4 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
   }
 }
 
-export default useTicketEcp
+export default useDetail

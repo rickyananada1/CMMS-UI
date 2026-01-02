@@ -17,12 +17,10 @@ const WOServiceReqTab = () => {
   const tabsContent = [
     {
       title: 'List',
-      // element: <ServiceRequestList  onGoToServiceRequest={() => setActiveTab(1)} />,
       element: <ServiceRequestList />,
     },
     {
       title: 'Service Request',
-      // element: <ServiceRequestIndex />,
       disabled: !serviceRequestState?.selectedServiceRequest,
       element: (
         <ServiceRequestIndex
@@ -46,7 +44,6 @@ const WOServiceReqTab = () => {
           app_name: 'Service Request',
           app_action: 'Create',
           action: () => {
-            console.log("CREATE CLICKED!")
             dispatch(
               serviceRequestActions.setSelectedAppIndexAndAction({
                 index: 1,
