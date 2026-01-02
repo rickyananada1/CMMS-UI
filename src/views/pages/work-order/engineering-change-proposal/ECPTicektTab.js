@@ -135,7 +135,6 @@ const ECPTicektTab = () => {
     {
       group: 'Failure Analysis',
       menu: [
-        // CREATE - selalu tampilkan
         {
           title: 'Create Failure Analysis',
           modul_name: 'Work Order',
@@ -154,7 +153,6 @@ const ECPTicektTab = () => {
             )
           },
         },
-        // UPDATE - selalu tampilkan
         {
           title: 'Update Failure Analysis',
           modul_name: 'Work Order',
