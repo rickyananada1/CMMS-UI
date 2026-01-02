@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import axios from '../../../libs/axios'
 import { CSpinner } from '@coreui/react'
 import mammoth from 'mammoth'
 import * as XLSX from 'xlsx'
@@ -35,20 +34,46 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
 
     const fetchFile = async () => {
       try {
-        const response = await axios.get(fileUrl, { responseType: 'blob' })
-        const mimeType = response.headers['content-type'] || 'application/octet-stream'
-        const blob = new Blob([response.data], { type: mimeType })
-        const url = URL.createObjectURL(blob)
+        // Build full URL tanpa /api - eksplisit remove /api dari baseURL
+        let baseURL = process.env.REACT_APP_API_BASE_URL || ''
+        // Remove /api jika ada di baseURL
+        baseURL = baseURL.replace(/\/api\/?$/, '')
+
+        // Remove /api dari fileUrl juga jika fileUrl adalah full URL
+        let cleanFileUrl = fileUrl
+        if (fileUrl.includes('/api/')) {
+          cleanFileUrl = fileUrl.replace(/\/api\//, '/')
+        }
+
+        const fullUrl = cleanFileUrl.startsWith('http') ? cleanFileUrl : `${baseURL}${cleanFileUrl}`
+
+        const token = localStorage.getItem('access_token')
+        const response = await fetch(fullUrl, {
+          method: 'GET',
+          headers: {
+            Authorization: token,
+            Accept: '*/*',
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const blob = await response.blob()
+        const mimeType = response.headers.get('content-type') || 'application/octet-stream'
+        const blobWithType = new Blob([blob], { type: mimeType })
+        const url = URL.createObjectURL(blobWithType)
         setObjectUrl(url)
 
         if (extension === 'docx' || extension === 'doc') {
-          const arrayBuffer = await blob.arrayBuffer()
+          const arrayBuffer = await blobWithType.arrayBuffer()
           const result = await mammoth.convertToHtml({ arrayBuffer })
           setDocxHtml(result.value)
         }
 
         if (extension === 'xls' || extension === 'xlsx' || extension === 'csv') {
-          const arrayBuffer = await blob.arrayBuffer()
+          const arrayBuffer = await blobWithType.arrayBuffer()
           const workbook = XLSX.read(arrayBuffer, { type: 'array' })
           workbookRef.current = workbook
           setSheets(workbook.SheetNames)
