@@ -472,7 +472,6 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           if (mode === 'Create') {
             const response = await createServiceRequest.mutateAsync({ data: modifiedFormData })
             woId = response?.data?.data?.uuid
-             console.log(response, 'serrr.data?');
             if (!woId) {
               throw new Error('Service Request ID not returned')
             }
