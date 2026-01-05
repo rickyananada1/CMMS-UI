@@ -61,7 +61,10 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
         }
 
         const blob = await response.blob()
-        const mimeType = response.headers.get('content-type') || 'application/octet-stream'
+        let mimeType = response.headers.get('content-type') || 'application/octet-stream'
+        if (extension === 'pdf') {
+          mimeType = 'application/pdf'
+        }
         const blobWithType = new Blob([blob], { type: mimeType })
         const url = URL.createObjectURL(blobWithType)
         setObjectUrl(url)
