@@ -57,7 +57,7 @@ const columns = [
     header: 'ECP Number',
     accessorKey: 'ticketid',
     qName: 'qTicketId',
-    size: 100,
+    size: 150,
     cell: (row) => (
       <div style={{ width: `${row.column.getSize()}px` }}>{row.getValue() || '-'}</div>
     ),
