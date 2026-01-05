@@ -154,6 +154,7 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
           config={{
             header: { disableHeader: true, disableFileName: true },
             pdfVerticalScrollByDefault: true,
+            pdfjsWorkerSrc: 'https://unpkg.com/pdfjs-dist@4.3.136/build/pdf.worker.min.mjs',
           }}
           style={{ height: '100%' }}
         />

@@ -59,13 +59,10 @@ const FailureAnalysDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
 
   useEffect(() => {
     if (data && data.length > 0) {
-      // ✅ GUNAKAN setFailureAnalysisData (otomatis set hasData = true)
       dispatch(faTaskActions.setFailureAnalysisData(data))
 
-      // ✅ GUNAKAN setSelectedFailureAnalysis untuk currentData
       dispatch(faTaskActions.setSelectedFailureAnalysis(data[0]))
 
-      // Update localStorage
       const ticketUuid = selectedRow?.uuid || ticketEcpState?.selectedTicketEcp?.uuid
       if (ticketUuid) {
         localStorage.setItem(
@@ -74,7 +71,6 @@ const FailureAnalysDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
         )
       }
     } else if (data && data.length === 0) {
-      // Jika data kosong, reset state
       dispatch(faTaskActions.resetFailureAnalysisData())
     }
   }, [data, dispatch, selectedRow?.uuid, ticketEcpState?.selectedTicketEcp?.uuid])
