@@ -60,23 +60,102 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        const blob = await response.blob()
+        // Get arrayBuffer first for processing
+        const arrayBuffer = await response.arrayBuffer()
+
+        console.log(`File loaded: ${fileName}, size: ${arrayBuffer.byteLength} bytes`)
+
+        // Debug: Check first few bytes and validate file
+        if (arrayBuffer.byteLength > 0) {
+          const uint8Array = new Uint8Array(arrayBuffer)
+          const firstBytes = Array.from(uint8Array.slice(0, 4))
+            .map((b) => '0x' + b.toString(16).padStart(2, '0'))
+            .join(' ')
+          const firstChars = Array.from(uint8Array.slice(0, 20))
+            .map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : '.'))
+            .join('')
+          console.log(`First bytes: ${firstBytes}`)
+          console.log(`First chars: "${firstChars}"`)
+
+          // Check if response is HTML/XML/JSON/text instead of binary file
+          if (uint8Array[0] === 0x3c || uint8Array[0] === 0x7b || uint8Array[0] === 0x65) {
+            // 0x3c = '<' (HTML/XML), 0x7b = '{' (JSON), 0x65 = 'e' (text like "example")
+            const text = new TextDecoder().decode(uint8Array.slice(0, 300))
+            console.error('❌ Server returned text/XML instead of binary file:', text)
+            setError(
+              `File not found or invalid response from server. Expected ${extension.toUpperCase()} file but received text/XML. Please check if the file exists.`,
+            )
+            setIsLoading(false)
+            return
+          }
+
+          // Validate DOCX file signature
+          if (extension === 'docx' && (uint8Array[0] !== 0x50 || uint8Array[1] !== 0x4b)) {
+            console.warn(
+              `⚠️ Invalid DOCX file signature: expected ZIP (0x50 0x4b), got (0x${uint8Array[0].toString(
+                16,
+              )} 0x${uint8Array[1].toString(
+                16,
+              )}). File may be corrupted or in wrong format. Will try DocViewer fallback.`,
+            )
+            // Don't throw error, let DocViewer try to render it
+          }
+        }
+
+        // Create blob for object URL
         let mimeType = response.headers.get('content-type') || 'application/octet-stream'
         if (extension === 'pdf') {
           mimeType = 'application/pdf'
+        } else if (extension === 'docx') {
+          mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        } else if (extension === 'doc') {
+          mimeType = 'application/msword'
         }
-        const blobWithType = new Blob([blob], { type: mimeType })
-        const url = URL.createObjectURL(blobWithType)
+
+        const blob = new Blob([arrayBuffer], { type: mimeType })
+        const url = URL.createObjectURL(blob)
         setObjectUrl(url)
 
-        if (extension === 'docx' || extension === 'doc') {
-          const arrayBuffer = await blobWithType.arrayBuffer()
-          const result = await mammoth.convertToHtml({ arrayBuffer })
-          setDocxHtml(result.value)
+        // Only use mammoth for DOCX files (not old DOC format)
+        if (extension === 'docx') {
+          try {
+            // Validate that arrayBuffer has content
+            if (arrayBuffer.byteLength === 0) {
+              console.warn('Empty arrayBuffer, skipping mammoth conversion')
+            } else {
+              // Check for ZIP signature (DOCX files are ZIP archives)
+              const uint8Array = new Uint8Array(arrayBuffer)
+              const isZip = uint8Array[0] === 0x50 && uint8Array[1] === 0x4b
+
+              if (isZip) {
+                const result = await mammoth.convertToHtml({ arrayBuffer })
+                if (result.value && result.value.trim()) {
+                  setDocxHtml(result.value)
+                  console.log('✓ DOCX successfully converted with mammoth')
+                } else {
+                  console.warn('Mammoth returned empty content, will use DocViewer fallback')
+                }
+                if (result.messages && result.messages.length > 0) {
+                  console.log('Mammoth conversion messages:', result.messages)
+                }
+              } else {
+                console.warn(
+                  `⚠️ File "${fileName}" does not have ZIP signature (got: 0x${uint8Array[0].toString(
+                    16,
+                  )} 0x${uint8Array[1].toString(16)}). Using DocViewer fallback.`,
+                )
+              }
+            }
+          } catch (docError) {
+            console.warn(
+              'Mammoth conversion failed, will use DocViewer fallback:',
+              docError.message,
+            )
+            // Keep objectUrl for DocViewer fallback rendering
+          }
         }
 
         if (extension === 'xls' || extension === 'xlsx' || extension === 'csv') {
-          const arrayBuffer = await blobWithType.arrayBuffer()
           const workbook = XLSX.read(arrayBuffer, { type: 'array' })
           workbookRef.current = workbook
           setSheets(workbook.SheetNames)
@@ -150,28 +229,48 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
 
   if (extension === 'pdf' && objectUrl) {
     return (
-      <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-        <DocViewer
-          documents={[{ uri: objectUrl, fileType: 'pdf' }]}
-          pluginRenderers={DocViewerRenderers}
-          config={{
-            header: { disableHeader: true, disableFileName: true },
-            pdfVerticalScrollByDefault: true,
-            pdfjsWorkerSrc: 'https://unpkg.com/pdfjs-dist@4.3.136/build/pdf.worker.min.mjs',
+      <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+        <iframe
+          src={objectUrl}
+          title={fileName}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
           }}
-          style={{ height: '100%' }}
         />
       </div>
     )
   }
 
-  if ((extension === 'docx' || extension === 'doc') && docxHtml) {
+  // Show mammoth-converted HTML for DOCX only
+  if (extension === 'docx' && docxHtml) {
     return (
       <div
         className="p-4 overflow-auto"
         style={{ width: '100%', height: '80vh' }}
         dangerouslySetInnerHTML={{ __html: docxHtml }}
       />
+    )
+  }
+
+  // Fallback for DOC/DOCX if mammoth conversion failed or returned empty
+  if ((extension === 'docx' || extension === 'doc') && objectUrl) {
+    return (
+      <div style={{ width: '100%', height: '100%' }}>
+        <DocViewer
+          documents={[{ uri: objectUrl, fileName: fileName }]}
+          pluginRenderers={DocViewerRenderers}
+          config={{
+            header: {
+              disableHeader: true,
+              disableFileName: true,
+              retainURLParams: false,
+            },
+          }}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
     )
   }
 

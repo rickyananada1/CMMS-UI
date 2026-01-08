@@ -9,7 +9,7 @@ import TicketEcpIndex from '../engineering-change-proposal/pages/engineering-cha
 import FailureAnalysIndex from '../engineering-change-proposal/pages/failure-analysis/FailureAnalysIndex'
 import { breadcrumbActions } from 'src/store/actions'
 import { ticketEcpActions } from './slices/ticketEcpSlice'
-import { faTaskActions } from '../engineering-change-proposal/pages/failure-analysis/slice/failureAnalysSlice'
+import { faTaskActions } from '../engineering-change-proposal/pages/failure-analysis/slices/failureAnalysSlice'
 
 const ECPTicektTab = () => {
   const dispatch = useDispatch()

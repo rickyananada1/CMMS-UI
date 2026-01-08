@@ -2,7 +2,7 @@
 /* prettier-ignore-start */
 import React, { Fragment, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { faTaskActions } from '../failure-analysis/slice/failureAnalysSlice'
+import { faTaskActions } from '../failure-analysis/slices/failureAnalysSlice'
 import TicketEcpDetail from './TicketEcpDetails'
 import TicketEcpForm from './TicketEcpForm'
 
