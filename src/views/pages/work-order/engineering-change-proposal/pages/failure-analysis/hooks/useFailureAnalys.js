@@ -11,7 +11,7 @@ import useFileUpload from 'src/views/pages/upload-file/hooks/useFileUpload'
 import withReactContent from 'sweetalert2-react-content'
 import { ticketEcpActions } from '../../../slices/ticketEcpSlice'
 import { useGetFileUploaded } from 'src/views/pages/upload-file/services/getFileUploaded'
-import { faTaskActions } from '../../failure-analysis/slice/failureAnalysSlice'
+import { faTaskActions } from '../../failure-analysis/slices/failureAnalysSlice'
 
 const useFailureAnalys = ({ mode, setAction, setTabIndex, setVisible }) => {
   const Notification = withReactContent(Swal)

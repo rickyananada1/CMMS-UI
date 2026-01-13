@@ -12,7 +12,7 @@ import { DetailCard } from 'src/components/elements/cards'
 import CardHeader from 'src/components/elements/cards/CardHeader'
 import useFailureAnalys from './hooks/useFailureAnalys'
 import DetailFailurTask from './detial-failur/DetailFailurTask'
-import { faTaskActions } from '../failure-analysis/slice/failureAnalysSlice'
+import { faTaskActions } from '../failure-analysis/slices/failureAnalysSlice'
 
 const FailureAnalysDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
   const dispatch = useDispatch()

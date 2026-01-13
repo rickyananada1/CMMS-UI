@@ -33,8 +33,8 @@ import { quickReportingSlice } from 'src/views/pages/work-order/quick-reporting/
 import { preventiveMaintenanceSlice } from 'src/views/pages/work-order/preventive-maintenance/slices/preventiveMaintenanceSlices'
 import { serviceRequestSlice } from 'src/views/pages/work-order/service-request/slices/serviceRequestSlice'
 import { ticketEcpSlice } from 'src/views/pages/work-order/engineering-change-proposal/slices/ticketEcpSlice'
-import { failureAnalysSlice } from 'src/views/pages/work-order/engineering-change-proposal/pages/failure-analysis/slice/failureAnalysSlice'
-import { ecpSlice } from 'src/views/pages/work-order/engineering-change-proposal/pages/engineering-change-proposal/slice/ecpSlice'
+import { failureAnalysSlice } from 'src/views/pages/work-order/engineering-change-proposal/pages/failure-analysis/slices/failureAnalysSlice'
+import { ecpSlice } from 'src/views/pages/work-order/engineering-change-proposal/pages/engineering-change-proposal/slices/ecpSlice'
 
 // Init Reducer
 const rootReducer = combineReducers({
