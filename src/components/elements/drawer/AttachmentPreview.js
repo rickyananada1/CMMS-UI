@@ -33,6 +33,11 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
     setObjectUrl(null)
 
     const fetchFile = async () => {
+      // Track local state for logging (since setState is async)
+      let url = null
+      let localDocxHtml = ''
+      let localError = null
+
       try {
         // Build full URL tanpa /api - eksplisit remove /api dari baseURL
         let baseURL = process.env.REACT_APP_API_BASE_URL || ''
@@ -78,8 +83,8 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
           console.log(`First chars: "${firstChars}"`)
 
           // Check if response is HTML/XML/JSON/text instead of binary file
-          if (uint8Array[0] === 0x3c || uint8Array[0] === 0x7b || uint8Array[0] === 0x65) {
-            // 0x3c = '<' (HTML/XML), 0x7b = '{' (JSON), 0x65 = 'e' (text like "example")
+          if (uint8Array[0] === 0x3c || uint8Array[0] === 0x7b) {
+            // 0x3c = '<' (HTML/XML), 0x7b = '{' (JSON)
             const text = new TextDecoder().decode(uint8Array.slice(0, 300))
             console.error('❌ Server returned text/XML instead of binary file:', text)
             setError(
@@ -89,16 +94,41 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
             return
           }
 
-          // Validate DOCX file signature
-          if (extension === 'docx' && (uint8Array[0] !== 0x50 || uint8Array[1] !== 0x4b)) {
-            console.warn(
-              `⚠️ Invalid DOCX file signature: expected ZIP (0x50 0x4b), got (0x${uint8Array[0].toString(
-                16,
-              )} 0x${uint8Array[1].toString(
-                16,
-              )}). File may be corrupted or in wrong format. Will try DocViewer fallback.`,
+          // Check if response is plain text/HTML (starts with common text bytes)
+          // 0x65-0x7A (lowercase letters), common in HTML/text responses
+          const firstCharsLower = firstChars.toLowerCase()
+          if (
+            firstCharsLower.includes('html') ||
+            firstCharsLower.includes('<!doctype') ||
+            firstCharsLower.includes('example') ||
+            firstCharsLower.includes('http')
+          ) {
+            const text = new TextDecoder().decode(uint8Array.slice(0, 500))
+            console.error('❌ Server returned HTML/text page instead of binary file:', text)
+            setError(
+              `Cannot preview file: Server returned an HTML page instead of the actual ${extension.toUpperCase()} file. The file may not exist on the server or the URL is incorrect.`,
             )
-            // Don't throw error, let DocViewer try to render it
+            setIsLoading(false)
+            return
+          }
+
+          // Validate DOCX file signature - must be ZIP format
+          if (extension === 'docx' && (uint8Array[0] !== 0x50 || uint8Array[1] !== 0x4b)) {
+            const text = new TextDecoder().decode(uint8Array.slice(0, 100))
+            console.error(
+              `❌ Invalid DOCX file: expected ZIP signature (0x50 0x4b), got (0x${uint8Array[0].toString(
+                16,
+              )} 0x${uint8Array[1].toString(16)}).`,
+            )
+            console.error('File content preview:', text)
+            setError(
+              `Invalid DOCX file format. The file appears to be corrupted or is not a valid DOCX file. Expected ZIP format but received: "${text.substring(
+                0,
+                50,
+              )}..."`,
+            )
+            setIsLoading(false)
+            return
           }
         }
 
@@ -113,7 +143,8 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
         }
 
         const blob = new Blob([arrayBuffer], { type: mimeType })
-        const url = URL.createObjectURL(blob)
+        url = URL.createObjectURL(blob)
+        console.log(`✓ Object URL created for ${fileName}:`, url)
         setObjectUrl(url)
 
         // Only use mammoth for DOCX files (not old DOC format)
@@ -131,6 +162,7 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
                 const result = await mammoth.convertToHtml({ arrayBuffer })
                 if (result.value && result.value.trim()) {
                   setDocxHtml(result.value)
+                  localDocxHtml = result.value
                   console.log('✓ DOCX successfully converted with mammoth')
                 } else {
                   console.warn('Mammoth returned empty content, will use DocViewer fallback')
@@ -166,9 +198,14 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
           setExcelData(sheetData)
         }
       } catch (err) {
+        console.error('❌ Error loading file:', err)
         setError(err?.message || 'Failed to load file')
+        localError = err?.message || 'Failed to load file'
       } finally {
         setIsLoading(false)
+        console.log(
+          `📊 Final state - hasObjectUrl: ${!!url}, hasDocxHtml: ${!!localDocxHtml}, error: ${localError}, extension: ${extension}`,
+        )
       }
     }
 
@@ -203,6 +240,13 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
       grid.style.columnHeaderColor = '#000'
       grid.style.activeCellBorderColor = 'blue'
 
+      // Make grid read-only (tidak bisa diedit)
+      grid.attributes.editable = false
+      grid.attributes.allowColumnReordering = false
+      grid.attributes.allowColumnResize = false
+      grid.attributes.allowRowReordering = false
+      grid.attributes.allowRowResize = false
+
       const headers = excelData[0]
       const rows = excelData
         .slice(1)
@@ -225,7 +269,10 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
       </div>
     )
 
-  if (error) return <ErrorFallback extension={extension} message={error} />
+  if (error) {
+    console.log('❌ Rendering ErrorFallback due to error:', error)
+    return <ErrorFallback extension={extension} message={error} />
+  }
 
   if (extension === 'pdf' && objectUrl) {
     return (
@@ -245,10 +292,17 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
 
   // Show mammoth-converted HTML for DOCX only
   if (extension === 'docx' && docxHtml) {
+    console.log('✓ Rendering DOCX with mammoth HTML')
     return (
       <div
         className="p-4 overflow-auto"
-        style={{ width: '100%', height: '80vh' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+          whiteSpace: 'pre-wrap',
+        }}
         dangerouslySetInnerHTML={{ __html: docxHtml }}
       />
     )
@@ -256,6 +310,7 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
 
   // Fallback for DOC/DOCX if mammoth conversion failed or returned empty
   if ((extension === 'docx' || extension === 'doc') && objectUrl) {
+    console.log('✓ Rendering DOCX/DOC with DocViewer fallback')
     return (
       <div style={{ width: '100%', height: '100%' }}>
         <DocViewer
@@ -309,6 +364,14 @@ const AttachmentPreview = ({ fileUrl, fileName }) => {
     return <img src={objectUrl} alt={fileName} style={{ maxWidth: '100%', maxHeight: '80vh' }} />
   }
 
+  console.log(
+    '⚠️ No matching render condition, showing ErrorFallback. objectUrl:',
+    !!objectUrl,
+    'docxHtml:',
+    !!docxHtml,
+    'extension:',
+    extension,
+  )
   return <ErrorFallback extension={extension} />
 }
 
