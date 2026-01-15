@@ -7,6 +7,7 @@ import TicketEcpList from '../engineering-change-proposal/pages/list/TicketEcpLi
 import { useDispatch, useSelector } from 'react-redux'
 import TicketEcpIndex from '../engineering-change-proposal/pages/engineering-change-proposal/TicketEcpIndex'
 import FailureAnalysIndex from '../engineering-change-proposal/pages/failure-analysis/FailureAnalysIndex'
+import FailureDefendsIndex from '../engineering-change-proposal/pages/failure-defense-task/FailureDefendsIndex'
 import { breadcrumbActions } from 'src/store/actions'
 import { ticketEcpActions } from './slices/ticketEcpSlice'
 import { faTaskActions } from '../engineering-change-proposal/pages/failure-analysis/slices/failureAnalysSlice'
@@ -74,7 +75,11 @@ const ECPTicektTab = () => {
       title: 'Failure Defense Task',
       disabled: !ticketEcpState?.selectedTicketEcp,
       element: (
-        ` <div>hahaha</div>>`
+        <FailureDefendsIndex
+          mode={ticketEcpState?.selectedAppAction}
+          setAction={(param) => dispatch(ticketEcpActions.setSelectedAppAction(param))}
+          setTabIndex={(param) => dispatch(ticketEcpActions.setSelectedAppIndex(param))}
+        />
       ),
     },
   ]
@@ -141,9 +146,9 @@ const ECPTicektTab = () => {
           app_group: 'Work Order',
           app_name: 'Engineering Change Proposal',
           app_action: 'Create',
-         disabled: !ticketEcpState?.selectedTicketEcp || 
-                   activeTabIndex !== 2 || 
-                   hasFailureAnalysisData,
+          disabled: !ticketEcpState?.selectedTicketEcp ||
+            activeTabIndex !== 2 ||
+            hasFailureAnalysisData,
           action: () => {
             dispatch(
               ticketEcpActions.setSelectedAppIndexAndAction({
@@ -159,14 +164,67 @@ const ECPTicektTab = () => {
           app_group: 'Work Order',
           app_name: 'Engineering Change Proposal',
           app_action: 'Update',
-         disabled: !ticketEcpState?.selectedTicketEcp || 
-                   activeTabIndex !== 2 || 
-                   !hasFailureAnalysisData,
+          disabled: !ticketEcpState?.selectedTicketEcp ||
+            activeTabIndex !== 2 ||
+            !hasFailureAnalysisData,
           action: () => {
             dispatch(
               ticketEcpActions.setSelectedAppIndexAndAction({
                 index: 2,
                 action: 'Update',
+              }),
+            )
+          },
+        },
+      ],
+    },
+    {
+      group: 'Failure Defense Task',
+      menu: [
+        {
+          title: 'New Failure Defense Task',
+          modul_name: 'Work Order',
+          app_group: 'Work Order',
+          app_name: 'Engineering Change Proposal',
+          disabled: !ticketEcpState?.selectedTicketEcp || activeTabIndex !== 3,
+          app_action: 'Create',
+          action: () => {
+            dispatch(
+              ticketEcpActions.setSelectedAppIndexAndAction({
+                index: 3,
+                action: 'Create',
+              }),
+            )
+          },
+        },
+        {
+          title: 'Update/Edit Failure Defense Task',
+          modul_name: 'Work Order',
+          app_group: 'Work Order',
+          app_name: 'Engineering Change Proposal',
+          app_action: 'Update',
+          disabled: !ticketEcpState?.selectedTicketEcp || activeTabIndex !== 3,
+          action: () => {
+            dispatch(
+              ticketEcpActions.setSelectedAppIndexAndAction({
+                index: 3,
+                action: 'Update',
+              }),
+            )
+          },
+        },
+        {
+          title: 'Delete Failure Defense Task',
+          modul_name: 'Work Order',
+          app_group: 'Work Order',
+          app_name: 'Engineering Change Proposal',
+          app_action: 'Delete',
+          disabled: !ticketEcpState?.selectedTicketEcp || activeTabIndex !== 3,
+          action: () => {
+            dispatch(
+              ticketEcpActions.setSelectedAppIndexAndAction({
+                index: 3,
+                action: 'Delete',
               }),
             )
           },

@@ -3,76 +3,43 @@
 import React, { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { MdClose } from 'react-icons/md'
-import useDetail from './hooks/useDetail'
 import { FaRegFileAlt } from 'react-icons/fa'
 import AttachmentPreview from '../../../../../../../components/elements/drawer/AttachmentPreview'
 import moment from 'moment'
 
-const DetailFailurTask = ({ isOpen, onClose, files, selectedFile, onSelectFile, mode, setAction, setTabIndex, setVisible, type }) => {
-  const {
-    data,
-    isLoading,
-    dataFile,
-    isDrawerOpen,
-    setDrawerOpen,
-    selectedFiles,
-    setSelectedFile,
-    handleOpenDrawer,
-    // activeTab,
-    showDetail,
-    handleChangeTab,
-    handleViewDetail,
-  } = useDetail({
-    isOpen,
-    onClose,
-    files,
-    selectedFile,
-    onSelectFile,
-    mode,
-    setAction,
-    setTabIndex,
-    setVisible,
-    type,
-  })
+const DetailFailurTask = ({tasks, isOpen, onClose, files, selectedFile, onSelectFile, type }) => {
   const [btnActive, btnSetActive] = useState(false);
 
-  const tabs = [
-    { key: 'fmea', name: 'Failure Mode Effect Analysis (FMEA)', title: data?.[0]?.fmea_summary, content: data?.[0]?.fmea_desc },
-    { key: 'rcfa', name: 'Root Cause Failure Analysis (RCFA)', title: data?.[0]?.rcfa_summary, content: data?.[0]?.rcfa_desc },
-    { key: 'cba', name: 'Cost Benefit Analysis (CBA)', title: data?.[0]?.cba_summary, content: data?.[0]?.cba_desc },
-    { key: 'lcca', name: 'Life Cycle Cost Analysis (LCCA)', title: data?.[0]?.lcca_summary, content: data?.[0]?.lcca_desc }
-  ];
-
   const allTabs = React.useMemo(() => {
-    if (!data) return [];
+    if (!tasks) return [];
 
     return [
       {
         key: 'fmea',
         name: 'Failure Mode Effect Analysis (FMEA)',
-        title: data?.[0]?.fmea_summary || '',
-        content: data?.[0]?.fmea_desc || ''
+        title: tasks?.fmea_summary || '',
+        content: tasks?.fmea_desc || ''
       },
       {
         key: 'rcfa',
         name: 'Root Cause Failure Analysis (RCFA)',
-        title: data?.[0]?.rcfa_summary || '',
-        content: data?.[0]?.rcfa_desc || ''
+        title: tasks?.rcfa_summary || '',
+        content: tasks?.rcfa_desc || ''
       },
       {
         key: 'cba',
         name: 'Cost Benefit Analysis (CBA)',
-        title: data?.[0]?.cba_summary || '',
-        content: data?.[0]?.cba_desc || ''
+        title: tasks?.cba_summary || '',
+        content: tasks?.cba_desc || ''
       },
       {
         key: 'lcca',
         name: 'Life Cycle Cost Analysis (LCCA)',
-        title: data?.[0]?.lcca_summary || '',
-        content: data?.[0]?.lcca_desc || ''
+        title: tasks?.lcca_summary || '',
+        content: tasks?.lcca_desc || ''
       }
     ];
-  }, [data]);
+  }, [tasks]);
 
   const [activeTab, setActiveTab] = useState(type || 'fmea');
 
@@ -108,12 +75,13 @@ const DetailFailurTask = ({ isOpen, onClose, files, selectedFile, onSelectFile, 
 
       <div
         className={clsx(
-          'fixed top-0 right-0 h-screen w-[1200px] bg-white shadow-lg z-[1100] transform transition-transform duration-300 flex flex-col rounded-tl-2xl rounded-bl-2xl',
+          'fixed top-0 right-0 w-[1200px] bg-white shadow-lg z-[1100] transform transition-transform duration-300 flex flex-col rounded-tl-2xl rounded-bl-2xl',
           {
             'translate-x-0': isOpen,
             'translate-x-full': !isOpen,
           },
         )}
+        style={{ height: "100%", minHeight: "928px", overflow: "scroll" }}
       >
         <div className="flex justify-between items-center w-[1200px] px-4 py-3 border-[#E5E7E9] flex-shrink-0">
           <span className="text-2xl font-semibold">Detail Failure Analysis</span>
@@ -173,9 +141,9 @@ const DetailFailurTask = ({ isOpen, onClose, files, selectedFile, onSelectFile, 
               <div className="h-[525px] flex flex-1 overflow-hidden">
                 <div className="w-1/3 overflow-y-auto">
                   <div className="flex items-center justify-between px-4 py-2 sticky top-0 bg-white z-10">
-                    <p className="text-lg text-neutral-text-field text-nowrap font-semibold">
+                    <div className="text-lg text-neutral-text-field text-nowrap font-semibold">
                       File attached
-                    </p>
+                    </div>
                     <hr className="flex-1 ml-2 h-[1px] bg-neutral-stroke" />
                   </div>
 
@@ -253,7 +221,7 @@ const DetailFailurTask = ({ isOpen, onClose, files, selectedFile, onSelectFile, 
               </div>
             }
             {!btnActive && activeTabData && (
-              <div className="h-[525px] w-[1200px] p-4">
+              <div className="p-4">
                 <div className="py-4 px-8 border border-1 rounded-lg bg-[#FAFAFA] border-[#E5E7E9] mt-3">
                   <div className="text-center font-semibold text-base">
                     {activeTabData.title}

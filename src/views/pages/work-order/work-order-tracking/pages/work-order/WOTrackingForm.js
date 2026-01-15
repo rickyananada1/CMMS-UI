@@ -984,6 +984,7 @@ const WOTrackingForm = ({ mode, setAction, setTabIndex }) => {
                         }}
                         onChange={(val) => {
                           setFieldValue('ticketid', val)
+                          setFieldValue('service_request_id', val?.uuid || '')
                           setFieldValue('summary', val?.description || '')
                         }}
                         size="md"

@@ -44,23 +44,23 @@ export default function ToolbarTiptap({ editor }) {
   };
 
   const handleAttachmentChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const url = URL.createObjectURL(file);
-  editor?.commands.setLink({ href: "https://google.com" });
-editor?.commands.insertContent("Google Test");
+    const url = URL.createObjectURL(file);
+    editor?.commands.setLink({ href: "https://google.com" });
+    editor?.commands.insertContent("Google Test");
 
 
-  editor
-    .chain()
-    .focus()
-    .insertContent(`📎 `)           // insert icon dulu
-    .setLink({ href: url })        // jadikan bagian berikutnya sebagai LINK
-    .insertContent(file.name)      // teks yang di-link
-    .unsetLink()                   // stop link supaya tidak "merembet" ke teks berikutnya
-    .run();
-};
+    editor
+      .chain()
+      .focus()
+      .insertContent(`📎 `)           // insert icon dulu
+      .setLink({ href: url })        // jadikan bagian berikutnya sebagai LINK
+      .insertContent(file.name)      // teks yang di-link
+      .unsetLink()                   // stop link supaya tidak "merembet" ke teks berikutnya
+      .run();
+  };
 
   const Bold = () => (
     <img
@@ -280,18 +280,18 @@ editor?.commands.insertContent("Google Test");
         ))}
       </select>
       <Tagging />
-      <button className={activeClass(editor.isActive("bold"))} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold"><Bold /></button>
-      <button className={activeClass(editor.isActive("underline"))} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Underline"><Underline /></button>
-      <button className={activeClass(editor.isActive("italic"))} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic"><Italic /></button>
-      <button className={activeClass(editor.isActive("orderedList"))} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered list"><ListOrdered /></button>
-      <button className={activeClass(editor.isActive("bulletList"))} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bulleted list"><List /></button>
+      <button type="button" className={activeClass(editor.isActive("bold"))} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold"><Bold /></button>
+      <button type="button" className={activeClass(editor.isActive("underline"))} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Underline"><Underline /></button>
+      <button type="button" className={activeClass(editor.isActive("italic"))} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic"><Italic /></button>
+      <button type="button" className={activeClass(editor.isActive("orderedList"))} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered list"><ListOrdered /></button>
+      <button type="button" className={activeClass(editor.isActive("bulletList"))} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bulleted list"><List /></button>
       <Tagging />
-      <button onClick={() => editor.chain().focus().setTextAlign("left").run()} title="Align left"><AlignLeft /></button>
-      <button onClick={() => editor.chain().focus().setTextAlign("center").run()} title="Align center"><AlignCenter /></button>
-      <button onClick={() => editor.chain().focus().setTextAlign("right").run()} title="Align right"><AlignRight /></button>
-      <button onClick={() => editor.chain().focus().setTextAlign("justify").run()} title="Justify"><AlignJustify /></button>
+      <button type="button" onClick={() => editor.chain().focus().setTextAlign("left").run()} title="Align left"><AlignLeft /></button>
+      <button type="button" onClick={() => editor.chain().focus().setTextAlign("center").run()} title="Align center"><AlignCenter /></button>
+      <button type="button" onClick={() => editor.chain().focus().setTextAlign("right").run()} title="Align right"><AlignRight /></button>
+      <button type="button" onClick={() => editor.chain().focus().setTextAlign("justify").run()} title="Justify"><AlignJustify /></button>
       <Tagging />
-      <button onClick={addAttachment} title="Attach File">
+      <button type="button" onClick={addAttachment} title="Attach File">
         <Paperclip />
       </button>
       <input
@@ -300,16 +300,16 @@ editor?.commands.insertContent("Google Test");
         onChange={handleAttachmentChange}
         style={{ display: "none" }}
       />
-      <button onClick={addImage} title="Insert image"><ImageIcon /></button>
+      <button type="button" onClick={addImage} title="Insert image"><ImageIcon /></button>
       <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} style={{ display: "none" }} />
-      <button onClick={addLink} title="Insert link"><LinkIcon /></button>
+      <button type="button" onClick={addLink} title="Insert link"><LinkIcon /></button>
       <Tagging />
-      <button onClick={() => editor.chain().focus().undo().run()} title="Undo"><Undos /></button>
-      <button onClick={() => editor.chain().focus().redo().run()} title="Redo"><Redos /></button>
+      <button type="button" onClick={() => editor.chain().focus().undo().run()} title="Undo"><Undos /></button>
+      <button type="button" onClick={() => editor.chain().focus().redo().run()} title="Redo"><Redos /></button>
       <Tagging />
-      <button className={activeClass(editor.isActive("highlight"))} onClick={() => editor.chain().focus().toggleHighlight().run()} title="Highlight"><Highlighter /></button>
-      <button onClick={addTable} title="Insert table"><TableIcon /></button>
-      <button className={activeClass(editor.isActive("strike"))} onClick={() => editor.chain().focus().toggleStrike().run()} title="Strikethrough"><Strikethrough /></button>
+      <button type="button" className={activeClass(editor.isActive("highlight"))} onClick={() => editor.chain().focus().toggleHighlight().run()} title="Highlight"><Highlighter /></button>
+      <button type="button" onClick={addTable} title="Insert table"><TableIcon /></button>
+      <button type="button" className={activeClass(editor.isActive("strike"))} onClick={() => editor.chain().focus().toggleStrike().run()} title="Strikethrough"><Strikethrough /></button>
       <Tagging />
       <button onClick={() => setShowEmoji(!showEmoji)} title="Insert emoji"><Smile /></button>
       {showEmoji && (
@@ -317,11 +317,12 @@ editor?.commands.insertContent("Google Test");
           <EmojiPicker onEmojiClick={addEmoji} />
         </div>
       )}
-      <button onClick={() => editor.chain().focus().sinkListItem('listItem').run()} title="Increase indent"><ListIndentIncrease /></button>
-      <button onClick={() => editor.chain().focus().liftListItem('listItem').run()} title="Decrease indent"><ListIndentDecrease /></button>
+      <button type="button" onClick={() => editor.chain().focus().sinkListItem('listItem').run()} title="Increase indent"><ListIndentIncrease /></button>
+      <button type="button" onClick={() => editor.chain().focus().liftListItem('listItem').run()} title="Decrease indent"><ListIndentDecrease /></button>
       <Tagging />
-      <button onClick={handleSearch} title="Search"><Search /></button>
+      <button type="button" onClick={handleSearch} title="Search"><Search /></button>
       <button
+        type="button"
         className={activeClass(editor.isActive('subscript'))}
         onClick={() => editor.chain().focus().toggleSubscript().run()}
         title="Subscript"

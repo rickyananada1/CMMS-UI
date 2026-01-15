@@ -38,20 +38,7 @@ const FailureAnalysForm = ({ mode, setAction, setTabIndex }) => {
     uploadModalProps,
     files,
     handleDownload,
-    getWorkTypes,
-    getWorkPriorities,
-    getWorkClassifications,
-    getLocations,
-    getAssets,
-    getSites,
-    getFailureCodes,
-    getHazardGroup,
-    getWorkOrders,
-    work_order_statuses,
-    data,
-    getJobPlanList,
     disableEdit,
-    disableEdited,
   } = useFailureAnalys({
     mode,
     setAction,
@@ -232,7 +219,6 @@ const FailureAnalysForm = ({ mode, setAction, setTabIndex }) => {
                       </div>
                     </CCol>
                   </CRow>
-
                   <div>
                     <hr className="w-full ml-2 h-[1px] mt-[8px] bg-neutral-stroke mt-3"></hr>
                     <div className='border rounded border-0 bg-[#E9F1FB] max-w-[65px] text-[#18488B] p-[8px] text-center mb-3 mt-3'>
