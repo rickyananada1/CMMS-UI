@@ -19,7 +19,7 @@ import { Field, Form, Formik, FieldArray } from 'formik'
 import Editor from '../../../../../../../src/components/editor/EditorTiptap'
 import { Select, SelectPagination } from 'src/components/elements/select'
 import useFailurreDefends from './hooks/useFailurreDefends'
-import { faTaskSchema } from './schema'
+import { faDefendsSchema } from './schema'
 
 const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
   const {
@@ -47,7 +47,7 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
         enableReinitialize
         initialValues={formValue}
         onSubmit={handleSubmit}
-        // validationSchema={faTaskSchema}
+        validationSchema={faDefendsSchema}
         validateOnMount
         validateOnChange
         validateOnBlur
@@ -118,7 +118,7 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                             <CRow className="mb-3">
                               <CCol>
                                 <CFormLabel className="text-primary fw-semibold">
-                                  Failure Failure Defense Task 
+                                  Failure Failure Defense Task
                                 </CFormLabel>
                                 <div>
                                   <Editor
@@ -134,8 +134,8 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                                     }
                                     size="md"
                                   />
-                                  {errors.fmea_desc && touched.fmea_desc ? (
-                                    <div className="text-sm text-[#e55353] mt-1">{errors.fmea_desc}</div>
+                                  {errors.fdt_num && touched.fdt_num ? (
+                                    <div className="text-sm text-[#e55353] mt-1">{errors.fdt_num}</div>
                                   ) : null}
                                 </div>
                               </CCol>
@@ -154,6 +154,9 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                                   size="md"
                                   as={CFormInput}
                                 />
+                                {errors.craft && touched.craft ? (
+                                  <div className="text-sm text-[#e55353] mt-1">{errors.craft}</div>
+                                ) : null}
                               </CCol>
                               <CCol>
                                 <CFormLabel className="text-primary fw-semibold">
@@ -183,7 +186,9 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                                   size="md"
                                   as={SelectPagination}
                                 />
-
+                                {errors.maintenance_id && touched.maintenance_id ? (
+                                  <div className="text-sm text-[#e55353] mt-1">{errors.maintenance_id}</div>
+                                ) : null}
                               </CCol>
                               <CCol>
                                 <CFormLabel className="text-primary fw-semibold">
@@ -202,8 +207,8 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                                     setFieldValue(`data[${index}].frequency`, value);
                                   }}
                                 />
-                                {errors.description && touched.description ? (
-                                  <div className="text-sm text-[#e55353] mt-1">{errors.description}</div>
+                                {errors.frequency && touched.frequency ? (
+                                  <div className="text-sm text-[#e55353] mt-1">{errors.frequency}</div>
                                 ) : null}
                               </CCol>
                               <CCol>
@@ -228,6 +233,9 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                                   options={failure_defends_statuses}
                                   isLocalSearch
                                 />
+                                 {errors.frequency_unit && touched.frequency_unit ? (
+                                  <div className="text-sm text-[#e55353] mt-1">{errors.frequency_unit}</div>
+                                ) : null}
                               </CCol>
                             </CRow>
                             <CRow className="mb-3">
@@ -249,8 +257,8 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                                     }
                                     size="md"
                                   />
-                                  {errors.fmea_desc && touched.fmea_desc ? (
-                                    <div className="text-sm text-[#e55353] mt-1">{errors.fmea_desc}</div>
+                                  {errors.job_task && touched.job_task ? (
+                                    <div className="text-sm text-[#e55353] mt-1">{errors.job_task}</div>
                                   ) : null}
                                 </div>
                               </CCol>
@@ -274,8 +282,8 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                                     }
                                     size="md"
                                   />
-                                  {errors.fmea_desc && touched.fmea_desc ? (
-                                    <div className="text-sm text-[#e55353] mt-1">{errors.fmea_desc}</div>
+                                  {errors.post_maintenance_test && touched.post_maintenance_test ? (
+                                    <div className="text-sm text-[#e55353] mt-1">{errors.post_maintenance_test}</div>
                                   ) : null}
                                 </div>
                               </CCol>
