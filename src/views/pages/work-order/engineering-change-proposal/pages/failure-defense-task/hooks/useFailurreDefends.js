@@ -155,7 +155,6 @@ const useFailurreDefends = ({ mode, setAction, setTabIndex, setVisible }) => {
   const [messageSuccess, setMessageSuccess] = useState('')
 
   useEffect(() => {
-    // 🔹 hanya jalan saat edit
     if (mode !== 'Change' && mode !== 'Update') return;
 
     const detail = getFailureDefendsDetail.data?.data?.data;
@@ -290,7 +289,6 @@ const useFailurreDefends = ({ mode, setAction, setTabIndex, setVisible }) => {
   const validateEditDelete = async () => {
     return new Promise((resolve) => {
       if (!selectedRow) {
-        // Jika tidak ada row yang dipilih, batal
         resolve(false);
         return;
       }
@@ -306,12 +304,10 @@ const useFailurreDefends = ({ mode, setAction, setTabIndex, setVisible }) => {
     let items = [];
 
     if (Array.isArray(activeTask)) {
-      // dari checkbox (multi delete)
       items = activeTask.map((item) => ({
         id: item.id,
       }));
     } else if (activeTask?.id) {
-      // dari activeTask (single delete)
       items = [{ id: activeTask.id }];
     } else {
       return;
@@ -330,7 +326,6 @@ const useFailurreDefends = ({ mode, setAction, setTabIndex, setVisible }) => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Panggil API delete task berdasarkan uuid task
           await deleteFailureDefends.mutateAsync({
             items,
           });
@@ -363,15 +358,6 @@ const useFailurreDefends = ({ mode, setAction, setTabIndex, setVisible }) => {
       }
     });
   };
-
-  // const ticketId = useSelector(
-  //   (state) => state.serviceRequest.selectedServiceRequest
-  // );
-
-  // useEffect(() => {
-  //   if (!ticketId) return;
-  //   getFailureDefendsDetail.mutate(ticketId);
-  // }, [ticketId]);
 
   return {
     data,
