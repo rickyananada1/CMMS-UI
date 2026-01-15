@@ -99,7 +99,7 @@ const PopUpDeleteDefends = ({
               ? `${selectedIds.length} task selected`
               : 'Choose Failure Defense Task'}
           </span>
-          {openDropdown ? <BsChevronUp /> : <BsChevronDown />}
+          {openDropdown ? <BsChevronUp  style={{ color: '#2671D9'}} /> : <BsChevronDown  style={{ color: '#2671D9'}} />}
         </div>
 
         {/* Dropdown Content */}
@@ -111,7 +111,7 @@ const PopUpDeleteDefends = ({
             {/* Search */}
             <CInputGroup className="mb-2 border-0">
               <CInputGroupText className="border-0 bg-transparent">
-                <BsSearch />
+                <BsSearch style={{ color: '#2671D9'}}/>
               </CInputGroupText>
               <CFormInput
                 className="border-0 shadow-none"

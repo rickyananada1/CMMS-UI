@@ -199,13 +199,10 @@ const ServiceRequestList = () => {
           selectableRowSelected={(row) =>
             row.original?.uuid === selectedRow?.uuid
           }
-
           onRowClicked={async (row) => {
             setSelectedRow(row.original)
             resetSelectedTaskEtc()
           }}
-
-
           isAutoSelectFirstRow={false}
           hasAutoNumber
           isWithSearchField
