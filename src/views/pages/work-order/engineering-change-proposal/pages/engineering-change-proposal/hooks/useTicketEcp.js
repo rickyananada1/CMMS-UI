@@ -313,7 +313,7 @@ const useTicketEcp = ({ mode, setAction, setTabIndex, setVisible, formik }) => {
       ...(data?.asset_id !== null && {
         asset_id: {
           value: data?.asset_id,
-          label: data?.assetnum,
+          label: data?.asset_num,
           asset_description: data?.asset_description,
           site: data?.site,
         },

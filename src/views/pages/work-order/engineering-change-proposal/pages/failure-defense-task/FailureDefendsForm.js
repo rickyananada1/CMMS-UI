@@ -2,7 +2,6 @@
 /* prettier-ignore-start */
 import React from 'react'
 import {
-  CContainer,
   CFormLabel,
   CCol,
   CRow,
@@ -19,8 +18,6 @@ import { CiPaperplane } from 'react-icons/ci'
 import { Field, Form, Formik, FieldArray } from 'formik'
 import Editor from '../../../../../../../src/components/editor/EditorTiptap'
 import { Select, SelectPagination } from 'src/components/elements/select'
-import InputFile from 'src/components/elements/input/InputFile'
-import UploadFileModal from 'src/views/pages/upload-file/components/UploadFileModal'
 import useFailurreDefends from './hooks/useFailurreDefends'
 import { faTaskSchema } from './schema'
 
@@ -121,7 +118,7 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                             <CRow className="mb-3">
                               <CCol>
                                 <CFormLabel className="text-primary fw-semibold">
-                                  Failure Failure Defense Task <span className="text-red-main">*</span>
+                                  Failure Failure Defense Task 
                                 </CFormLabel>
                                 <div>
                                   <Editor
@@ -146,7 +143,7 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                             <CRow className="mb-3">
                               <CCol>
                                 <CFormLabel className="text-primary fw-semibold">
-                                  Craft (M\L\K) <span className="text-red-main">*</span>
+                                  Craft (M\L\K)
                                 </CFormLabel>
                                 <Field
                                   name={`data[${index}].craft`}
@@ -174,7 +171,6 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                                   onChange={(opt) => {
                                     if (!opt?.value) return
 
-                                    // ✅ INI YANG BENAR
                                     setFieldValue(`data.${index}.maintenance_id`, opt.value)
                                     setFieldValue(`data.${index}.maintenance_type`, opt.label)
                                   }}
@@ -191,7 +187,7 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                               </CCol>
                               <CCol>
                                 <CFormLabel className="text-primary fw-semibold">
-                                  Frequency <span className="text-red-main">*</span>
+                                  Frequency
                                 </CFormLabel>
                                 <Field
                                   name={`data[${index}].frequency`}
@@ -237,7 +233,7 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                             <CRow className="mb-3">
                               <CCol>
                                 <CFormLabel className="text-primary fw-semibold">
-                                  Job Task Instruction <span className="text-red-main">*</span>
+                                  Job Task Instruction
                                 </CFormLabel>
                                 <div>
                                   <Editor
@@ -262,7 +258,7 @@ const FailureDefendsForm = ({ mode, setAction, setTabIndex }) => {
                             <CRow className="mb-3">
                               <CCol>
                                 <CFormLabel className="text-primary fw-semibold">
-                                  Post Maintenance Testing <span className="text-red-main">*</span>
+                                  Post Maintenance Testing
                                 </CFormLabel>
                                 <div>
                                   <Editor
