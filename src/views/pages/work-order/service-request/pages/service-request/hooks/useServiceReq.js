@@ -72,7 +72,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const userOrgId = useSelector((state) => state.auth?.user?.organization_id)
   const siteid = useSelector((state) => state.auth?.user?.site)
   const reportedOrg = useSelector((state) => state.auth?.user?.user_id)
-  const oke = useSelector((state) => state.auth?.user?.site)
+  const siteSend = useSelector((state) => state.auth?.user?.uuid_site)
   const repId = {
     user_id: useSelector((state) => state.auth?.user?.user_id),
     reportedby: useSelector((state) => state.auth?.user?.display_name),
@@ -421,6 +421,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
   const updateServiceReq = useUpdateServiceReq()
 
   const handleSubmit = async (values, formikHelpers) => {
+    console.log(values, 'values formik');
     Notification.fire({
       icon: 'info',
       text: 'Are you sure to submit ?',
@@ -442,7 +443,7 @@ const useServiceReq = ({ mode, setAction, setTabIndex, setVisible }) => {
           asset_description: values?.asset_description ?? values?.asset_id?.asset_description ?? null,
           reportedby: values?.reportedby?.value ? Number(values.reportedby.value) : null,
           // siteid: values?.asset_id?.site_id ?? null,
-          siteid: values.site_id || values?.asset_id?.site || null,
+          siteid: siteSend || null,
           glaccount: values?.glaccount || null,
           description: values?.description || "",
           status: values?.status?.value ?? null,

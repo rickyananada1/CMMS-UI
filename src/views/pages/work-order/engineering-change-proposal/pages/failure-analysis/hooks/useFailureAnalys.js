@@ -361,11 +361,6 @@ const useFailureAnalys = ({ mode, setAction, setTabIndex, setVisible }) => {
     }
   }, [dispatch, getFailureAnalysData.data, ticketEcpState?.selectedTicketEcp?.uuid])
 
-
-  const selectedServiceReq = useSelector(
-    (state) => state.faTask?.selectedFailureAnalysis
-  )
-
   const createFailureAnalysis = useCreateFailureAnalysis()
   const updateFailureAnalysis = useCreateFailureAnalysis()
 

@@ -318,10 +318,10 @@ const AssetsTabs = () => {
         },
       ],
     },
+    /*
     {
       group: 'Safety Hazard Materials',
       menu: [
-        /*
         {
           title: 'New Hazard Materials',
           action: () => {
@@ -339,7 +339,6 @@ const AssetsTabs = () => {
             )
           },
         },
-        */
         {
           title: 'Update/Edit Hazard Materials',
           modul_name: 'Assets',
@@ -362,7 +361,6 @@ const AssetsTabs = () => {
             )
           },
         },
-        /*
         {
           title: 'Delete Hazard Materials',
           action: () => {
@@ -381,9 +379,9 @@ const AssetsTabs = () => {
             dispatch(assetsSafetyActions.setVisiblePopUp(true))
           },
         },
-        */
       ],
     },
+    */
     {
       group: 'Safety Lock Out Tag Out',
       menu: [

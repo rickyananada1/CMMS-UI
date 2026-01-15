@@ -80,32 +80,39 @@ const columns = [
     id: 'hazard_code',
     accessorKey: 'hazard.hazard_code',
     qName: 'qHazardCode',
+    cell: ({ getValue }) => getValue() ?? '-',
   },
   {
     header: 'Hazard',
     id: 'hazard_desc',
     accessorKey: 'hazard.hazard_desc',
     qName: 'qHazardDesc',
+    cell: ({ getValue }) => getValue() ?? '-',
   },
   {
     header: 'MSDS',
     accessorKey: 'safety_extended_data.msds_num',
+    cell: ({ getValue }) => getValue() ?? '-',
   },
   {
     header: 'Health',
     accessorKey: 'safety_extended_data.health_rating',
+    cell: ({ getValue }) => getValue() ?? '-',
   },
   {
     header: 'Flammability',
     accessorKey: 'safety_extended_data.flammability_rating',
+    cell: ({ getValue }) => getValue() ?? '-',
   },
   {
     header: 'Reactivity',
     accessorKey: 'safety_extended_data.reactivity_rating',
+    cell: ({ getValue }) => getValue() ?? '-',
   },
   {
     header: 'Contact',
     accessorKey: 'safety_extended_data.contact_rating',
+    cell: ({ getValue }) => getValue() ?? '-',
   },
 ]
 

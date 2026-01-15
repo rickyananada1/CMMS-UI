@@ -169,6 +169,7 @@ const FailureAnalysDetail = ({ mode, setAction, setTabIndex, setVisible }) => {
             selectedFile={selectedFile}
             onSelectFile={(file) => setSelectedFile(file)}
             type={activeDetailType}
+            tasks={data?.[0]}
             data={data?.[0]} />
         </CContainer>
       </DetailCard>

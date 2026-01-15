@@ -217,7 +217,7 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
   const getFailureCodes = useGetFailureCodes()
   const getHazardGroup = useGetHazardGroup()
   const getWorkOrders = useGetWorkOrders()
-  const site = useSelector((state) => state.auth?.user?.site)
+  const site = useSelector((state) => state.auth?.user?.uuid_site)
 
   const getUserSites = useGetUserSites({ site })
   const getJobPlanList = useGetJobPlanDropdown()
@@ -483,7 +483,7 @@ const useWorkOrder = ({ mode, setAction, setTabIndex, setVisible }) => {
           wbs_id: values?.wbs_id,
           vendor_id: values?.vendor_id,
           gl_account_id: values?.gl_account_id,
-          service_request_id: values?.ticketid?.value,
+          service_request_id: values?.uuid,
           job_plan_id: values?.job_plan_id?.value,
           pm_id: values?.pm_id?.value,
 

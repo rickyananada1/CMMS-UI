@@ -438,7 +438,7 @@ const ServiceRequestForm = ({ mode, setAction, setTabIndex }) => {
                         Asset Site <span className="text-red-main">*</span>
                       </CFormLabel>
                       <Field
-                        name="site_id"
+                        name="siteid"
                         placeholder="Select Site"
                         value={values?.asset_id?.site || ''}
                         size="md"
